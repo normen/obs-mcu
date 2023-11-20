@@ -26,6 +26,7 @@ var state *McuState
 //var drv *driver.Driver
 var midiInput drivers.In
 var midiOutput drivers.Out
+var midiStop func()
 
 //var midiWriter *writer.Writer
 //var midiReader *reader.Reader
@@ -36,7 +37,6 @@ var internalMcu chan interface{}
 var obsOutputChannel chan interface{}
 var interrupt chan os.Signal
 var connection chan int
-var connected bool
 
 // get a list of midi outputs
 func GetMidiOutputs() []string {
@@ -115,7 +115,11 @@ func connect() {
 	//TODO: reset
 	gomcu.Reset(midiOutput)
 
-	go midi.ListenTo(midiInput, receiveMidi)
+	midiStop, err = midi.ListenTo(midiInput, receiveMidi)
+	if err != nil {
+		log.Print(err)
+		retryConnect()
+	}
 
 	send, err := midi.SendTo(midiOutput)
 	if err != nil {
@@ -129,13 +133,15 @@ func connect() {
 	for _, msg := range m {
 		send(msg)
 	}
+	fromMcu <- msg.UpdateRequest{}
 	log.Print("MIDI Connected")
-	connected = true
 }
 
 func disconnect() {
-	connected = false
 	//debug.PrintStack()
+	if midiStop != nil {
+		midiStop()
+	}
 	if midiInput != nil {
 		err := midiInput.Close()
 		if err != nil {

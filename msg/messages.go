@@ -16,6 +16,9 @@ type KeyMessage struct {
 	HotkeyName string
 }
 
+type UpdateRequest struct {
+}
+
 // sent by obs to mackie
 
 type RecMessage struct {
