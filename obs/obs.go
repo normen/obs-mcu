@@ -21,6 +21,7 @@ import (
 var client *goobs.Client
 var interrupt chan os.Signal
 var connection chan int
+var sync chan int
 var connected bool
 
 //var connectCheck chan time.
@@ -36,6 +37,7 @@ func InitObs(in chan interface{}, out chan interface{}) {
 	channels = NewChannelList()
 	interrupt = make(chan os.Signal, 1)
 	connection = make(chan int, 1)
+	sync = make(chan int, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	go runLoop()
 	// start connection by sending connection state "0"
@@ -236,6 +238,8 @@ func runLoop() {
 			disconnect()
 			log.Print("Ending OBS runloop")
 			return
+		case <-sync:
+			channels.SyncMcu()
 		case state := <-connection:
 			switch state {
 			case 0:

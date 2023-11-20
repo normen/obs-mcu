@@ -2,8 +2,8 @@ package obs
 
 import (
 	"log"
-	//"runtime/debug"
 	"sort"
+	"time"
 
 	"github.com/andreykaipov/goobs/api/requests/inputs"
 	"github.com/andreykaipov/goobs/api/requests/sceneitems"
@@ -27,6 +27,7 @@ type ChangeSet struct {
 type ChannelList struct {
 	inputs       map[string]*Channel
 	FirstChannel int
+	syncRetry    *time.Timer
 }
 
 func NewChannelList() *ChannelList {
@@ -40,7 +41,7 @@ func (l *ChannelList) ChangeFaderBank(amount int) {
 	if l.FirstChannel < 0 {
 		l.FirstChannel = 0
 	}
-	l.SyncMcu()
+	l.sync()
 }
 
 // create alphabetically sorted list of visible channels
@@ -99,7 +100,7 @@ func (l *ChannelList) AddChannel(name string) {
 func (l *ChannelList) RemoveChannel(name string) {
 	if _, ok := l.inputs[name]; ok {
 		delete(l.inputs, name)
-		l.SyncMcu()
+		l.sync()
 	}
 }
 
@@ -108,7 +109,7 @@ func (l *ChannelList) SetVisible(name string, visible bool) {
 		if channel.Visible != visible {
 			channel.Visible = visible
 			l.getBaseInfos(name)
-			l.SyncMcu()
+			l.sync()
 		}
 	}
 }
@@ -194,13 +195,22 @@ func (l *ChannelList) SetTracks(name string, tracksEnabled map[int]bool) {
 
 func (l *ChannelList) Clear() {
 	l.inputs = make(map[string]*Channel)
-	l.SyncMcu()
+	l.sync()
 }
 
 func (l *ChannelList) SetAllInvisible() {
 	for _, channel := range l.inputs {
 		channel.Visible = false
 	}
+}
+
+func (l *ChannelList) sync() {
+	if l.syncRetry != nil {
+		l.syncRetry.Stop()
+		l.syncRetry = nil
+	}
+	// TODO: spaghetti (sync)
+	l.syncRetry = time.AfterFunc(100*time.Millisecond, func() { sync <- 0 })
 }
 
 func (l *ChannelList) SyncMcu() {
@@ -279,7 +289,7 @@ func (l *ChannelList) UpdateVisible() {
 		log.Print(err)
 	}
 	//TODO here?
-	l.SyncMcu()
+	l.sync()
 }
 
 // adds an input and gets the basic info (mute state, volume etc)
@@ -292,7 +302,7 @@ func (l *ChannelList) AddInput(inputName string) {
 		if tracks.InputAudioTracks != nil {
 			l.AddChannel(inputName)
 			//l.SetTracks(inputName, tracks.InputAudioTracks)
-			l.SyncMcu()
+			l.sync()
 		}
 	}
 }
