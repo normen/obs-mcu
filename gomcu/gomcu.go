@@ -1,13 +1,13 @@
 package gomcu
 
 import (
+	"log"
 	"strings"
 	"time"
 
-	"gitlab.com/gomidi/midi"
-	"gitlab.com/gomidi/midi/midimessage/channel"
-	"gitlab.com/gomidi/midi/midimessage/sysex"
-	"gitlab.com/gomidi/midi/writer"
+	"gitlab.com/gomidi/midi/v2"
+	"gitlab.com/gomidi/midi/v2/drivers"
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
 var (
@@ -27,7 +27,12 @@ var (
 
 // Reset resets and quickly triggers all the available features on the control surface.
 // I recommend running this both to avoid some errors and as a sanity check to make sure that your entire control surface is working.
-func Reset(wd *writer.Writer) {
+func Reset(output drivers.Out) {
+	send, err := midi.SendTo(output)
+	if err != nil {
+		log.Print(err)
+		return
+	}
 	var m []midi.Message
 	for i := 0; i < LenIDs; i++ {
 		m = append(m, SetLED(Switch(i), StateOn))
@@ -48,7 +53,9 @@ func Reset(wd *writer.Writer) {
 		m = append(m, SetLCD(i, "A"))
 	}
 
-	writer.WriteMessages(wd, m)
+	for _, msg := range m {
+		send(msg)
+	}
 
 	time.Sleep(time.Second)
 	m = []midi.Message{}
@@ -73,18 +80,20 @@ func Reset(wd *writer.Writer) {
 	for i := 0; i < LenLines; i++ {
 		m = append(m, SetLCD(i, " "))
 	}
-	writer.WriteMessages(wd, m)
+	for _, msg := range m {
+		send(msg)
+	}
 }
 
 // SetLED sets the chosen button's LED to the chosen State.
 func SetLED(led Switch, state State) midi.Message {
-	return channel.Channel(0).NoteOn(uint8(led), byte(state))
+	return midi.NoteOn(0, uint8(led), byte(state))
 }
 
 // SetFaderPos sets the position of the chosen fader to a number between 0 (bottom) and 16382 (top).
 func SetFaderPos(fader Channel, pos uint16) midi.Message {
 	p := int16(pos) - 8191
-	return channel.Channel(fader).Pitchbend(p)
+	return midi.Pitchbend(uint8(fader), p)
 }
 
 // SetTimeDisplay sets multiple characters on the timecode display.
@@ -108,7 +117,7 @@ func SetTimeDisplay(letters string) (m []midi.Message) {
 	}
 
 	for i := uint8(0); int(i) < len(bytes); i++ {
-		m = append(m, channel.Channel(15).ControlChange(i+0x40, bytes[i]))
+		m = append(m, midi.ControlChange(15, i+0x40, bytes[i]))
 	}
 	return
 }
@@ -119,32 +128,32 @@ func SetDigit(digit Digit, char Char) midi.Message {
 	if (char >= 0x40 && char <= 0x60) || (char >= 0x80 && char <= 0xA0) {
 		char = char - 0x40
 	}
-	return channel.Channel(15).ControlChange(byte(digit), byte(char))
+	return midi.ControlChange(15, byte(digit), byte(char))
 }
 
 // SetLCD sets the text (an ASCII string) found on the LCD starting from the specified offset.
 func SetLCDC4(offset int, row int, text string) midi.Message {
 	rowu := 0x30 + uint8(row)
-	return sysex.SysEx(append(append(header_c4, rowu, uint8(offset)), []byte(text)...))
+	return midi.SysEx(append(append(header_c4, rowu, uint8(offset)), []byte(text)...))
 }
 
 // SetLCD sets the text (an ASCII string) found on the LCD starting from the specified offset.
 func SetLCDXT(offset int, text string) midi.Message {
-	return sysex.SysEx(append(append(header_xt, 0x12, uint8(offset)), []byte(text)...))
+	return midi.SysEx(append(append(header_xt, 0x12, uint8(offset)), []byte(text)...))
 }
 
 // SetLCD sets the text (an ASCII string) found on the LCD starting from the specified offset.
 func SetLCD(offset int, text string) midi.Message {
-	return sysex.SysEx(append(append(header, 0x12, uint8(offset)), []byte(text)...))
+	return midi.SysEx(append(append(header, 0x12, uint8(offset)), []byte(text)...))
 }
 
 // SetVPot sets the LEDs around the knobs (VPots).
 // Refer to VPotMode for an explanation of the various VPot modes.
 func SetVPot(ch Channel, mode VPotMode, led VPotLED) midi.Message {
-	return channel.Channel(0).ControlChange(byte(ch+0x30), byte(mode)+byte(led))
+	return midi.ControlChange(0, byte(ch+0x30), byte(mode)+byte(led))
 }
 
 // SetMeter sets the level meter for the selected Channel to the desired value.
 func SetMeter(ch Channel, value MeterLevel) midi.Message {
-	return channel.Channel(0).Aftertouch(byte(ch<<4) + byte(value))
+	return midi.AfterTouch(0, byte(ch<<4)+byte(value))
 }

@@ -16,19 +16,19 @@ import (
 	"github.com/normen/obs-mcu/config"
 	"github.com/normen/obs-mcu/gomcu"
 	"github.com/normen/obs-mcu/msg"
-	"gitlab.com/gomidi/midi"
-	"gitlab.com/gomidi/midi/reader"
-	"gitlab.com/gomidi/midi/writer"
-	driver "gitlab.com/gomidi/rtmididrv"
+	"gitlab.com/gomidi/midi/v2"
+	"gitlab.com/gomidi/midi/v2/drivers"
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
 var state *McuState
-var drv *driver.Driver
-var midiInput midi.In
-var midiOutput midi.Out
 
-var midiWriter *writer.Writer
-var midiReader *reader.Reader
+//var drv *driver.Driver
+var midiInput drivers.In
+var midiOutput drivers.Out
+
+//var midiWriter *writer.Writer
+//var midiReader *reader.Reader
 var connectRetry *time.Timer
 var fromObs chan interface{}
 var fromMcu chan interface{}
@@ -40,28 +40,20 @@ var connected bool
 
 // get a list of midi outputs
 func GetMidiOutputs() []string {
+	outs := midi.GetOutPorts()
 	var names []string
-	if drv, err := driver.New(); err == nil {
-		defer drv.Close()
-		if outs, erra := drv.Ins(); erra == nil {
-			for _, output := range outs {
-				names = append(names, output.String())
-			}
-		}
+	for _, output := range outs {
+		names = append(names, output.String())
 	}
 	return names
 }
 
 // get a list of midi inputs
 func GetMidiInputs() []string {
+	ins := midi.GetInPorts()
 	var names []string
-	if drv, err := driver.New(); err == nil {
-		defer drv.Close()
-		if ins, erra := drv.Ins(); erra == nil {
-			for _, input := range ins {
-				names = append(names, input.String())
-			}
-		}
+	for _, input := range ins {
+		names = append(names, input.String())
 	}
 	return names
 }
@@ -80,46 +72,30 @@ func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	go runLoop()
 }
 
+// TODO: move elsewhere
+func SendMidi(m []midi.Message) {
+	send, err := midi.SendTo(midiOutput)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	for _, msg := range m {
+		send(msg)
+	}
+}
+
 func connect() {
 	var err error
 	disconnect()
 
-	drv, err := driver.New()
+	midiInput, err = midi.FindInPort(config.Config.Midi.PortIn)
 	if err != nil {
-		log.Print(err)
-		retryConnect()
-		return
-	}
-
-	ins, err := drv.Ins()
-	if err != nil {
-		log.Print(err)
-		retryConnect()
-		return
-	}
-
-	outs, err := drv.Outs()
-	if err != nil {
-		log.Print(err)
-		retryConnect()
-		return
-	}
-	for _, input := range ins {
-		if input.String() == config.Config.Midi.PortIn {
-			midiInput = input
-		}
-	}
-	for _, output := range outs {
-		if output.String() == config.Config.Midi.PortOut {
-			midiOutput = output
-		}
-	}
-	if midiInput == nil {
 		log.Printf("Could not find MIDI Input '%s'", config.Config.Midi.PortIn)
 		retryConnect()
-		return
 	}
-	if midiOutput == nil {
+
+	midiOutput, err = midi.FindOutPort(config.Config.Midi.PortOut)
+	if err != nil {
 		log.Printf("Could not find MIDI Output '%s'", config.Config.Midi.PortOut)
 		retryConnect()
 		return
@@ -136,22 +112,23 @@ func connect() {
 		retryConnect()
 	}
 
-	//TODO: check if closed
-	midiWriter = writer.New(midiOutput)
-	midiReader = reader.New(
-		reader.NoLogger(),
-		reader.NoteOn(noteon(midiWriter)),
-		reader.Pitchbend(pitchbend(9)),
-		reader.ControlChange(control(9)),
-	)
-	gomcu.Reset(midiWriter)
+	//TODO: reset
+	gomcu.Reset(midiOutput)
 
-	go midiReader.ListenTo(midiInput)
+	go midi.ListenTo(midiInput, receiveMidi)
+
+	send, err := midi.SendTo(midiOutput)
+	if err != nil {
+		log.Print(err)
+		retryConnect()
+	}
 
 	//m := []midi.Message{gomcu.SetDigit(gomcu.AssignLeft, 'H'), gomcu.SetDigit(gomcu.AssignRight, 'W'), gomcu.SetLCD(0, "Hello,"), gomcu.SetLCD(56, "World")}
 	m := []midi.Message{}
 	m = append(m, gomcu.SetTimeDisplay("OBS Studio")...)
-	writer.WriteMessages(midiWriter, m)
+	for _, msg := range m {
+		send(msg)
+	}
 	log.Print("MIDI Connected")
 	connected = true
 }
@@ -172,13 +149,6 @@ func disconnect() {
 			log.Print(err)
 		}
 		midiOutput = nil
-	}
-	if drv != nil {
-		err := drv.Close()
-		if err != nil {
-			log.Print(err)
-		}
-		drv = nil
 	}
 }
 
@@ -204,9 +174,11 @@ func getCommand(k uint8) string {
 	return ""
 }
 
-func noteon(wr *writer.Writer) func(p *reader.Position, c, k, v uint8) {
-	return func(p *reader.Position, c, k, v uint8) {
-		//log.Printf("Channel %v, Note %v, Value %v", c, k, v)
+func receiveMidi(message midi.Message, timestamps int32) {
+	var c, k, v uint8
+	var val int16
+	var uval uint16
+	if message.GetNoteOn(&c, &k, &v) {
 		if gomcu.Switch(k) >= gomcu.BankL && gomcu.Switch(k) <= gomcu.ChannelR {
 			var amount int
 			switch gomcu.Switch(k) {
@@ -258,56 +230,43 @@ func noteon(wr *writer.Writer) func(p *reader.Position, c, k, v uint8) {
 				}
 			}
 		}
-	}
-}
-
-func control(input int) func(p *reader.Position, c, k, value uint8) {
-	return func(p *reader.Position, c, k, value uint8) {
+	} else if message.GetControlChange(&c, &k, &v) {
 		if gomcu.Switch(k) >= 0x10 && gomcu.Switch(k) <= 0x17 {
 			amount := 0
-			if value < 65 {
-				amount = int(value)
+			if v < 65 {
+				amount = int(v)
 			} else {
-				amount = -1 * (int(value) - 64)
+				amount = -1 * (int(v) - 64)
 			}
 			fromMcu <- msg.VPotChangeMessage{
 				FaderNumber:  k - 0x10,
 				ChangeAmount: amount,
 			}
 		}
-	}
-}
 
-func pitchbend(input int) func(p *reader.Position, channel uint8, value int16) {
-	return func(p *reader.Position, channel uint8, value int16) {
+	} else if message.GetPitchBend(&c, &val, &uval) {
 		//log.Printf("Value for fader #%d: %f", channel, value)
 		internalMcu <- msg.RawFaderMessage{
-			FaderNumber: channel,
-			FaderValue:  value,
-		}
-		val := IntToFaderFloat(value)
-		fromMcu <- msg.FaderMessage{
-			FaderNumber: channel,
+			FaderNumber: c,
 			FaderValue:  val,
 		}
+		ival := IntToFaderFloat(val)
+		fromMcu <- msg.FaderMessage{
+			FaderNumber: c,
+			FaderValue:  ival,
+		}
 	}
-}
 
-func must(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
 }
 
 func checkMidiConnection() bool {
-	if midiWriter == nil {
-		return false
-	}
 	if midiInput != nil {
 		if !midiInput.IsOpen() {
 			retryConnect()
 			return false
 		}
+	} else {
+		return false
 	}
 	return true
 }

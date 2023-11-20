@@ -108,7 +108,8 @@ Heres a list of planned features I might get around to work on:
 
 ##### Internal
 
-- [ ] Update to go-midi v2 and better handle MIDI disconnects
+- [x] Update to go-midi v2
+- [ ] Better handling of MIDI disconnects
 
 #### Development
 
