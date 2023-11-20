@@ -45,14 +45,14 @@ rm changes.txt
 rm *.zip
 
 # update homebrew tap
-#URL="https://github.com/normen/obs-mcu/archive/$VERSION.tar.gz"
-#wget $URL
-#SHASUM=$(shasum -a 256 $VERSION.tar.gz|awk '{print$1}')
-#rm $VERSION.tar.gz
-#cd ../../BrewCode/homebrew-tap
-#sed -i bak "s/sha256 \".*/sha256 \"$SHASUM\"/" Formula/obs-mcu.rb
-#sed -i bak "s!url \".*!url \"$URL\"!" Formula/obs-mcu.rb
-#rm Formula/obs-mcu.rbbak
-#git add -A
-#git commit -m "update obs-mcu to $VERSION"
-#git push
+URL="https://github.com/normen/obs-mcu/archive/$VERSION.tar.gz"
+wget $URL
+SHASUM=$(shasum -a 256 $VERSION.tar.gz|awk '{print$1}')
+rm $VERSION.tar.gz
+cd ../../BrewCode/homebrew-tap
+sed -i bak "s/sha256 \".*/sha256 \"$SHASUM\"/" Formula/obs-mcu.rb
+sed -i bak "s!url \".*!url \"$URL\"!" Formula/obs-mcu.rb
+rm Formula/obs-mcu.rbbak
+git add -A
+git commit -m "update obs-mcu to $VERSION"
+git push

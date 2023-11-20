@@ -47,6 +47,14 @@ To map a button you have to find the internal OBS key name and assign it in the 
 play = KEY:OBSBasic.StartStreaming
 ```
 
+#### Installation
+
+On Windows and Linux just put the binary somewhere and run it, for MacOS theres a homebrew tap to install the latest version:
+
+`brew install normen/tap/obs-mcu`
+
+which can then be run from the command line using `obs-mcu`
+
 #### Configuration
 
 ##### Basic Rundown
