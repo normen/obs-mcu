@@ -35,7 +35,9 @@ rm obs-mcu
 
 # publish to github
 git pull
+set +e
 LASTTAG=$(git describe --tags --abbrev=0)
+set -e
 git log $LASTTAG..HEAD --no-decorate --pretty=format:"- %s" --abbrev-commit > changes.txt
 vim changes.txt
 gh release create $VERSION $LINUXF $MACF $WINF $RASPIF -F changes.txt -t $VERSION
