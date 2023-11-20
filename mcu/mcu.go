@@ -142,6 +142,7 @@ func connect() {
 		reader.NoLogger(),
 		reader.NoteOn(noteon(midiWriter)),
 		reader.Pitchbend(pitchbend(9)),
+		reader.ControlChange(control(9)),
 	)
 	gomcu.Reset(midiWriter)
 
@@ -255,6 +256,23 @@ func noteon(wr *writer.Writer) func(p *reader.Position, c, k, v uint8) {
 						//log.Printf("Got key press for %s", cmdString)
 					}
 				}
+			}
+		}
+	}
+}
+
+func control(input int) func(p *reader.Position, c, k, value uint8) {
+	return func(p *reader.Position, c, k, value uint8) {
+		if gomcu.Switch(k) >= 0x10 && gomcu.Switch(k) <= 0x17 {
+			amount := 0
+			if value < 65 {
+				amount = int(value)
+			} else {
+				amount = -1 * (int(value) - 64)
+			}
+			fromMcu <- msg.VPotChangeMessage{
+				FaderNumber:  k - 0x10,
+				ChangeAmount: amount,
 			}
 		}
 	}

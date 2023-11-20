@@ -22,6 +22,8 @@ The fact that it runs as a standalone app even on a Raspberry Pi allows you to c
 
 The `Faders` and the `Mute` buttons work as you'd expect, they basically mirror the audio mixer in OBS.
 
+The `VPots` allow you to change the audio sync offset for the audio channel in 10ms increments, the LCD shows the current offset.
+
 The `Solo` buttons set the monitor mode for the channel to "monitor and output".
 
 The `Rec` buttons set the monitor mode for the channel to "monitor only".
@@ -99,7 +101,7 @@ Heres a list of planned features I might get around to work on:
 - [ ] Allow loading different config files
 - [ ] Select channels (for feature below)
 - [ ] Allow selection of output tracks for selected channel
-- [ ] Allow use of Vpots to control delay, show in display
+- [x] Allow use of Vpots to control delay, show in display
 - [ ] Allow assigning states in OBS to LEDs
 - [ ] Show meters
 - [ ] Video fade on master fader

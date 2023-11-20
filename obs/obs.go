@@ -169,6 +169,19 @@ func processMcuMessage(message interface{}) {
 		}
 	case msg.BankMessage:
 		channels.ChangeFaderBank(e.ChangeAmount)
+	case msg.VPotChangeMessage:
+		name := channels.GetVisibleName(e.FaderNumber)
+		if name != "" {
+			newDelay := channels.GetDelayMS(name) + float64(e.ChangeAmount*10)
+			if newDelay < 10 && newDelay > -10 {
+				//TODO: workaround for goobs not sending "0" delay
+				newDelay = 0.001
+			}
+			_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: newDelay})
+			if err != nil {
+				log.Print(err)
+			}
+		}
 	}
 }
 
@@ -205,6 +218,8 @@ func processObsMessage(event interface{}) {
 	//channels.UpdateVisible()
 	case *events.InputAudioTracksChanged:
 		//log.Printf("%s's audio tracks changed: %v", e.InputName, e.InputAudioTracks)
+	case *events.InputAudioSyncOffsetChanged:
+		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)
 	case *events.ExitStarted:
 		log.Print("Gracefully shutting down")
 		//disconnect()

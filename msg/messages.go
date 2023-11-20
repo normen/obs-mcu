@@ -48,11 +48,6 @@ type MonitorTypeMessage struct {
 	MonitorType string
 }
 
-type VPotMessage struct {
-	VPotNumber byte
-	VPotValue  float64
-}
-
 type LedMessage struct {
 	LedNumber byte
 	LedValue  bool
@@ -72,6 +67,11 @@ type ChannelTextMessage struct {
 }
 
 type BankMessage struct {
+	ChangeAmount int
+}
+
+type VPotChangeMessage struct {
+	FaderNumber  byte
 	ChangeAmount int
 }
 

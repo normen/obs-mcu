@@ -1,6 +1,7 @@
 package obs
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -17,6 +18,7 @@ type Channel struct {
 	Pan         float64
 	Volume      float64
 	MonitorType string
+	DelayMS     float64
 	Tracks      []bool
 }
 
@@ -167,6 +169,30 @@ func (l *ChannelList) GetMonitorType(name string) string {
 	return ""
 }
 
+func (l *ChannelList) SetDelayMS(name string, delay float64) {
+	//delay = delay
+	if channel, ok := l.inputs[name]; ok {
+		if channel.DelayMS != delay {
+			channel.DelayMS = delay
+			num := l.GetVisibleNumber(name)
+			if num != -1 {
+				fromObs <- msg.ChannelTextMessage{
+					FaderNumber: byte(num),
+					Lower:       true,
+					Text:        fmt.Sprintf("%.0f", delay),
+				}
+			}
+		}
+	}
+}
+
+func (l *ChannelList) GetDelayMS(name string) float64 {
+	if channel, ok := l.inputs[name]; ok {
+		return channel.DelayMS
+	}
+	return 0.0
+}
+
 func (l *ChannelList) SetVolume(name string, volume float64) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Volume != volume {
@@ -232,6 +258,11 @@ func (l *ChannelList) SyncMcu() {
 			FaderNumber: byte(i),
 			Text:        input.Name,
 		}
+		fromObs <- msg.ChannelTextMessage{
+			FaderNumber: byte(i),
+			Lower:       true,
+			Text:        fmt.Sprintf("%.0f", input.DelayMS),
+		}
 		maxidx = i + 1
 	}
 	for i := maxidx; i < 8; i++ {
@@ -249,6 +280,11 @@ func (l *ChannelList) SyncMcu() {
 		}
 		fromObs <- msg.ChannelTextMessage{
 			FaderNumber: byte(i),
+			Text:        "",
+		}
+		fromObs <- msg.ChannelTextMessage{
+			FaderNumber: byte(i),
+			Lower:       true,
 			Text:        "",
 		}
 	}
@@ -364,6 +400,12 @@ func (l *ChannelList) getBaseInfos(inputName string) {
 	mon, err := client.Inputs.GetInputAudioMonitorType(&inputs.GetInputAudioMonitorTypeParams{InputName: inputName})
 	if err == nil {
 		l.SetMonitorType(inputName, mon.MonitorType)
+	} else {
+		log.Print(err)
+	}
+	sync, err := client.Inputs.GetInputAudioSyncOffset(&inputs.GetInputAudioSyncOffsetParams{InputName: inputName})
+	if err == nil {
+		l.SetDelayMS(inputName, sync.InputAudioSyncOffset)
 	} else {
 		log.Print(err)
 	}
