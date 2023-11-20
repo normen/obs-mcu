@@ -8,6 +8,7 @@ sudo apt install clang libasound2-dev
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.2.2"
+var VERSION string = "v0.2.3"
 var interrupt chan os.Signal
 
 // TODO: config file command line option
@@ -26,6 +27,7 @@ func main() {
 	flag.BoolVar(&showMidi, "l", false, "List all installed MIDI devices")
 	flag.BoolVar(&showHelp, "h", false, "Show Help")
 	flag.Parse()
+	log.Printf("OBS-MCU %v", VERSION)
 	if showHelp {
 		fmt.Println("Usage: obs-mcu [options]")
 		flag.PrintDefaults()
