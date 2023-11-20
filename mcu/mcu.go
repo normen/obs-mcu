@@ -179,6 +179,10 @@ func receiveMidi(message midi.Message, timestamps int32) {
 	var val int16
 	var uval uint16
 	if message.GetNoteOn(&c, &k, &v) {
+		// avoid noteoffs
+		if v == 0 {
+			return
+		}
 		if gomcu.Switch(k) >= gomcu.BankL && gomcu.Switch(k) <= gomcu.ChannelR {
 			var amount int
 			switch gomcu.Switch(k) {
