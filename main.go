@@ -17,7 +17,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.2.6"
+var VERSION string = "v0.2.8"
 var interrupt chan os.Signal
 
 // TODO: config file command line option
@@ -28,6 +28,7 @@ func main() {
 	flag.BoolVar(&showHelp, "h", false, "Show Help")
 	flag.Parse()
 	log.Printf("OBS-MCU %v", VERSION)
+	config.InitConfig()
 	if showHelp {
 		fmt.Println("Usage: obs-mcu [options]")
 		flag.PrintDefaults()
@@ -36,7 +37,6 @@ func main() {
 	} else {
 		interrupt = make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt)
-		config.InitConfig()
 		fromMcu := make(chan interface{}, 100)
 		fromObs := make(chan interface{}, 100)
 		obs.InitObs(fromMcu, fromObs)
