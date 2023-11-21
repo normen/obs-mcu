@@ -28,13 +28,14 @@ func main() {
 	flag.BoolVar(&showHelp, "h", false, "Show Help")
 	flag.Parse()
 	log.Printf("OBS-MCU %v", VERSION)
-	config.InitConfig()
 	if showHelp {
 		fmt.Println("Usage: obs-mcu [options]")
 		flag.PrintDefaults()
 	} else if showMidi {
 		ShowMidiPorts()
+		config.InitConfig()
 	} else {
+		config.InitConfig()
 		interrupt = make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt)
 		fromMcu := make(chan interface{}, 100)
