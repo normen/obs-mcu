@@ -223,14 +223,21 @@ func (l *ChannelList) SetVolume(name string, volume float64) {
 	}
 }
 
-func (l *ChannelList) SetTrack(idx byte, state bool) {
+func (l *ChannelList) SetTrack(idx byte, state bool) *Channel {
 	if channel, ok := l.inputs[l.SelectedChannel]; ok {
 		strIdx := fmt.Sprintf("%v", idx+1)
 		if stateCur, ok := channel.Tracks[strIdx]; ok {
 			channel.Tracks[strIdx] = !stateCur
-			l.sync()
+			if channel.Name == l.SelectedChannel {
+				fromObs <- msg.TrackEnableMessage{
+					TrackNumber: byte(idx),
+					Value:       !stateCur,
+				}
+			}
+			return channel
 		}
 	}
+	return nil
 }
 
 func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
@@ -240,6 +247,7 @@ func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
 			for i, enabled := range channel.Tracks {
 				idx, err := strconv.Atoi(i)
 				if err == nil {
+					idx--
 					fromObs <- msg.TrackEnableMessage{
 						TrackNumber: byte(idx),
 						Value:       enabled,
@@ -341,7 +349,7 @@ func (l *ChannelList) SyncMcu() {
 		for i, enabled := range channel.Tracks {
 			idx, err := strconv.Atoi(i)
 			if err == nil {
-				idx = idx - 1
+				idx--
 				fromObs <- msg.TrackEnableMessage{
 					TrackNumber: byte(idx),
 					Value:       enabled,
@@ -396,7 +404,6 @@ func (l *ChannelList) AddInput(inputName string) {
 		tracks, _ := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
 		if tracks.InputAudioTracks != nil {
 			l.AddChannel(inputName)
-			//l.SetTracks(inputName, tracks.InputAudioTracks)
 			l.sync()
 		}
 	}
@@ -409,7 +416,6 @@ func (l *ChannelList) addInput(inputName string) {
 	if _, ok := l.inputs[inputName]; !ok {
 		tracks, _ := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
 		if tracks.InputAudioTracks != nil {
-			//l.SetTracks(inputName, tracks.InputAudioTracks)
 			l.AddChannel(inputName)
 		}
 	}
@@ -471,7 +477,6 @@ func (l *ChannelList) getBaseInfos(inputName string) {
 	tracks, err := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
 	if err == nil {
 		l.SetTracks(inputName, map[string]bool(*tracks.InputAudioTracks))
-		l.SetDelayMS(inputName, sync.InputAudioSyncOffset)
 	} else {
 		log.Print(err)
 	}

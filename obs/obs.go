@@ -13,6 +13,7 @@ import (
 	"github.com/andreykaipov/goobs/api/events/subscriptions"
 	"github.com/andreykaipov/goobs/api/requests/general"
 	"github.com/andreykaipov/goobs/api/requests/inputs"
+	"github.com/andreykaipov/goobs/api/typedefs"
 
 	"github.com/normen/obs-mcu/config"
 	"github.com/normen/obs-mcu/msg"
@@ -174,7 +175,13 @@ func processMcuMessage(message interface{}) {
 	case msg.SelectMessage:
 		channels.SetSelected(e.FaderNumber, e.Value)
 	case msg.TrackEnableMessage:
-		channels.SetTrack(e.TrackNumber, e.Value)
+		channel := channels.SetTrack(e.TrackNumber, e.Value)
+		if channel != nil {
+			_, err := client.Inputs.SetInputAudioTracks(&inputs.SetInputAudioTracksParams{InputName: channel.Name, InputAudioTracks: (*typedefs.InputAudioTracks)(&channel.Tracks)})
+			if err != nil {
+				log.Print(err)
+			}
+		}
 	case msg.UpdateRequest:
 		channels.SyncMcu()
 	case msg.VPotChangeMessage:
