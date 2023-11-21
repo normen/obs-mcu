@@ -66,7 +66,11 @@ func (l *ChannelList) GetVisible() []Channel {
 		}
 	}
 	if len(channels) > l.FirstChannel {
-		return channels[l.FirstChannel:]
+		vis := channels[l.FirstChannel:]
+		if len(vis) > 8 {
+			vis = vis[:8]
+		}
+		return vis
 	} else {
 		return []Channel{}
 	}
