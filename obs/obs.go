@@ -219,6 +219,8 @@ func processObsMessage(event interface{}) {
 	//log.Printf("Program change")
 	//channels.UpdateVisible()
 	case *events.InputAudioTracksChanged:
+	case *events.InputAudioBalanceChanged:
+		channels.SetPan(e.InputName, e.InputAudioBalance)
 		//log.Printf("%s's audio tracks changed: %v", e.InputName, e.InputAudioTracks)
 	case *events.InputAudioSyncOffsetChanged:
 		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)

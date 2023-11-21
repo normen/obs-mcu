@@ -110,7 +110,6 @@ func (l *ChannelList) SetVisible(name string, visible bool) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Visible != visible {
 			channel.Visible = visible
-			l.getBaseInfos(name)
 			l.sync()
 		}
 	}
