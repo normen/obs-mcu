@@ -46,7 +46,7 @@ rm *.zip
 
 # update homebrew tap
 URL="https://github.com/normen/obs-mcu/archive/$VERSION.tar.gz"
-wget $URL
+wget -q $URL
 SHASUM=$(shasum -a 256 $VERSION.tar.gz|awk '{print$1}')
 rm $VERSION.tar.gz
 cd ../../BrewCode/homebrew-tap
