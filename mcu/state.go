@@ -23,14 +23,12 @@ type McuState struct {
 }
 
 func NewMcuState() *McuState {
-	//time.Now().Add
 	state := McuState{}
 	state.Text = "                                                                                                                "
 	state.Assign = []rune{' ', ' '}
 	state.FaderLevels = append(state.FaderLevels, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	state.FaderLevelsBuffered = append(state.FaderLevelsBuffered, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	state.FaderTouch = []bool{false, false, false, false, false, false, false, false, false}
-	//state.FaderTouchTimeout = []float64{0, 0, 0, 0, 0, 0, 0, 0, 0}
 	now := time.Now()
 	state.FaderTouchTimeout = []time.Time{now, now, now, now, now, now, now, now, now}
 	state.LedStates = make(map[byte]bool)
@@ -47,7 +45,6 @@ func (m *McuState) Update() {
 			if since.Milliseconds() > 300 {
 				m.FaderTouch[i] = false
 				// sends if not already same
-				//log.Printf("Fader #%v is released, sending", i)
 				m.SetFaderLevel(byte(i), level)
 			}
 		}
@@ -71,8 +68,6 @@ func (m *McuState) SetFaderLevel(fader byte, level float64) {
 			if m.Debug {
 				log.Print(x)
 			}
-		} else {
-			//log.Printf("Fader #%v is touched, not sending", fader)
 		}
 	}
 }
@@ -116,7 +111,6 @@ func (m *McuState) SetTrackEnabledState(track byte, state bool) {
 
 func (m *McuState) SendLed(num byte, state bool) {
 	if m.LedStates[num] != state {
-		//log.Printf("Sending led %v, %t", num, state)
 		m.LedStates[num] = state
 		var mstate gomcu.State
 		if state {

@@ -446,7 +446,6 @@ func (l *ChannelList) addSpecialInput(inputName string) {
 	l.setVisible(inputName, true)
 }
 
-// TODO: reduce calls to this
 func (l *ChannelList) getBaseInfos(inputName string) {
 	volume, err := client.Inputs.GetInputVolume(&inputs.GetInputVolumeParams{InputName: inputName})
 	if err == nil {

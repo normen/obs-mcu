@@ -1,10 +1,5 @@
 package mcu
 
-/*
-TODO:
-- update MIDI stack to v2
-*/
-
 import (
 	"log"
 	"os"
@@ -166,14 +161,6 @@ func checkMidiConnection() bool {
 		if !midiInput.IsOpen() {
 			retryConnect()
 			return false
-			//} else {
-			//// TODO: workaround for missing connection detection in go-midi
-			//_, err := midi.FindInPort(config.Config.Midi.PortIn)
-			//_, err2 := midi.FindOutPort(config.Config.Midi.PortOut)
-			//if err2 != nil || err != nil {
-			//retryConnect()
-			//return false
-			//}
 		}
 	} else {
 		return false

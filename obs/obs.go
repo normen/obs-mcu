@@ -204,36 +204,26 @@ func processObsMessage(event interface{}) {
 	switch e := event.(type) {
 	//TODO: special inputs changed
 	case *events.InputActiveStateChanged:
-		//log.Printf("%s's active is now %t", e.InputName, e.VideoActive)
 		channels.SetVisible(e.InputName, e.VideoActive)
 	case *events.InputMuteStateChanged:
-		//log.Printf("%s's mute is now %t", e.InputName, e.InputMuted)
 		channels.SetMuted(e.InputName, e.InputMuted)
 	case *events.InputVolumeChanged:
-		//log.Printf("%s's volume is now %f", e.InputName, e.InputVolumeMul)
 		channels.SetVolume(e.InputName, e.InputVolumeMul)
 	case *events.InputNameChanged:
-		//log.Printf("%s's name is now %s", e.OldInputName, e.InputName)
 		// TODO: cleaner
 		channels.RemoveChannel(e.OldInputName)
 		channels.AddInput(e.InputName)
 	case *events.InputAudioMonitorTypeChanged:
-		//log.Printf("%s's monitor type is now %s", e.InputName, e.MonitorType)
 		channels.SetMonitorType(e.InputName, e.MonitorType)
 	case *events.InputCreated:
-		//log.Printf("%s's been created", e.InputName)
 		channels.AddInput(e.InputName)
 	case *events.InputRemoved:
-		//log.Printf("%s's been removed", e.InputName)
 		channels.RemoveChannel(e.InputName)
 	case *events.CurrentProgramSceneChanged:
-	//log.Printf("Program change")
-	//channels.UpdateVisible()
 	case *events.InputAudioTracksChanged:
 		channels.SetTracks(e.InputName, map[string]bool(*e.InputAudioTracks))
 	case *events.InputAudioBalanceChanged:
 		channels.SetPan(e.InputName, e.InputAudioBalance)
-		//log.Printf("%s's audio tracks changed: %v", e.InputName, e.InputAudioTracks)
 	case *events.InputAudioSyncOffsetChanged:
 		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)
 	case *events.ExitStarted:
