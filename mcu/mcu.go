@@ -200,12 +200,12 @@ func receiveMidi(message midi.Message, timestamps int32) {
 		} else if gomcu.Switch(k) >= gomcu.Fader1 && gomcu.Switch(k) <= gomcu.Fader8 {
 			// fader touch - handle locally
 			internalMcu <- msg.RawFaderTouchMessage{
-				FaderNumber: k - 104,
+				FaderNumber: k - byte(gomcu.Fader1),
 				Pressed:     v == 127,
 			}
 		} else if gomcu.Switch(k) >= gomcu.Mute1 && gomcu.Switch(k) <= gomcu.Mute8 {
 			fromMcu <- msg.MuteMessage{
-				FaderNumber: k - 0x10,
+				FaderNumber: k - byte(gomcu.Mute1),
 			}
 		} else if gomcu.Switch(k) >= gomcu.Rec1 && gomcu.Switch(k) <= gomcu.Rec8 {
 			fromMcu <- msg.MonitorTypeMessage{
@@ -214,8 +214,12 @@ func receiveMidi(message midi.Message, timestamps int32) {
 			}
 		} else if gomcu.Switch(k) >= gomcu.Solo1 && gomcu.Switch(k) <= gomcu.Solo8 {
 			fromMcu <- msg.MonitorTypeMessage{
-				FaderNumber: k - 0x08,
+				FaderNumber: k - byte(gomcu.Solo1),
 				MonitorType: "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT",
+			}
+		} else if gomcu.Switch(k) >= gomcu.Select1 && gomcu.Switch(k) <= gomcu.Select8 {
+			fromMcu <- msg.SelectMessage{
+				FaderNumber: k - byte(gomcu.Select1),
 			}
 		} else if len(gomcu.Names) > int(k) {
 			command := getCommand(k)
@@ -315,6 +319,8 @@ func runLoop() {
 				state.SetAssignText(e.Characters)
 			case msg.MonitorTypeMessage:
 				state.SetMonitorState(e.FaderNumber, e.MonitorType)
+			case msg.SelectMessage:
+				state.SetSelectState(e.FaderNumber, e.Value)
 			case msg.LedMessage:
 				//state.SetLed(e.LedName
 				if num, ok := gomcu.IDs[e.LedName]; ok {

@@ -27,9 +27,10 @@ type ChangeSet struct {
 }
 
 type ChannelList struct {
-	inputs       map[string]*Channel
-	FirstChannel int
-	syncRetry    *time.Timer
+	inputs          map[string]*Channel
+	FirstChannel    int
+	SelectedChannel string
+	syncRetry       *time.Timer
 }
 
 func NewChannelList() *ChannelList {
@@ -69,7 +70,7 @@ func (l *ChannelList) GetVisible() []Channel {
 
 func (l *ChannelList) GetVisibleName(index byte) string {
 	visible := l.GetVisible()
-	myIndex := int(index) + l.FirstChannel
+	myIndex := int(index)
 	if len(visible) > myIndex {
 		return visible[index].Name
 	}
@@ -80,9 +81,8 @@ func (l *ChannelList) GetVisibleNumber(name string) int {
 	visible := l.GetVisible()
 	for idx, ch := range visible {
 		if ch.Name == name {
-			myIdx := idx - l.FirstChannel
-			if myIdx >= 0 {
-				return myIdx
+			if idx >= 0 {
+				return idx
 			} else {
 				return -1
 			}
@@ -146,6 +146,17 @@ func (l *ChannelList) SetPan(name string, pan float64) {
 	}
 }
 
+func (l *ChannelList) SetSelected(fader byte, selected bool) {
+	name := l.GetVisibleName(fader)
+	if name != "" {
+		l.SelectedChannel = name
+		fromObs <- msg.SelectMessage{
+			FaderNumber: fader,
+			Value:       true,
+		}
+	}
+}
+
 func (l *ChannelList) SetMonitorType(name string, mon string) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.MonitorType != mon {
@@ -178,7 +189,7 @@ func (l *ChannelList) SetDelayMS(name string, delay float64) {
 				fromObs <- msg.ChannelTextMessage{
 					FaderNumber: byte(num),
 					Lower:       true,
-					Text:        fmt.Sprintf("%.0f", delay),
+					Text:        fmt.Sprintf("%.0fms", delay),
 				}
 			}
 		}
@@ -260,7 +271,7 @@ func (l *ChannelList) SyncMcu() {
 		fromObs <- msg.ChannelTextMessage{
 			FaderNumber: byte(i),
 			Lower:       true,
-			Text:        fmt.Sprintf("%.0f", input.DelayMS),
+			Text:        fmt.Sprintf("%.0fms", input.DelayMS),
 		}
 		maxidx = i + 1
 	}
@@ -290,6 +301,18 @@ func (l *ChannelList) SyncMcu() {
 	asgn := []rune{'0' + rune((l.FirstChannel+1)/10%10), '0' + rune((l.FirstChannel+1)%10)}
 	fromObs <- msg.AssignLEDMessage{
 		Characters: asgn,
+	}
+	selectNo := l.GetVisibleNumber(l.SelectedChannel)
+	if selectNo != -1 {
+		fromObs <- msg.SelectMessage{
+			FaderNumber: byte(selectNo),
+			Value:       true,
+		}
+	} else {
+		fromObs <- msg.SelectMessage{
+			FaderNumber: 0,
+			Value:       false,
+		}
 	}
 	//TODO: spaghetti
 	states.SendAll()

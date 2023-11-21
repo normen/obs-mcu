@@ -171,6 +171,8 @@ func processMcuMessage(message interface{}) {
 		}
 	case msg.BankMessage:
 		channels.ChangeFaderBank(e.ChangeAmount)
+	case msg.SelectMessage:
+		channels.SetSelected(e.FaderNumber, e.Value)
 	case msg.UpdateRequest:
 		channels.SyncMcu()
 	case msg.VPotChangeMessage:

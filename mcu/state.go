@@ -101,6 +101,14 @@ func (m *McuState) SetMuteState(fader byte, state bool) {
 	m.SendLed(num, state)
 }
 
+func (m *McuState) SetSelectState(fader byte, state bool) {
+	for i := 0; i < 8; i++ {
+		lit := (byte(i) == fader) && state
+		num := byte(gomcu.Select1) + byte(i)
+		m.SendLed(num, lit)
+	}
+}
+
 func (m *McuState) SendLed(num byte, state bool) {
 	if m.LedStates[num] != state {
 		//log.Printf("Sending led %v, %t", num, state)
