@@ -134,6 +134,7 @@ func disconnect() {
 	//debug.PrintStack()
 	if midiStop != nil {
 		midiStop()
+		midiStop = nil
 	}
 	if midiInput != nil {
 		err := midiInput.Close()
@@ -153,10 +154,31 @@ func disconnect() {
 
 func retryConnect() {
 	log.Print("Retry connection..")
+	disconnect()
 	if connectRetry != nil {
 		connectRetry.Stop()
 	}
 	connectRetry = time.AfterFunc(3*time.Second, func() { connection <- 0 })
+}
+
+func checkMidiConnection() bool {
+	if midiInput != nil {
+		if !midiInput.IsOpen() {
+			retryConnect()
+			return false
+		} else {
+			// TODO: workaround for missing connection detection in go-midi
+			_, err := midi.FindInPort(config.Config.Midi.PortIn)
+			_, err2 := midi.FindOutPort(config.Config.Midi.PortOut)
+			if err2 != nil || err != nil {
+				retryConnect()
+				return false
+			}
+		}
+	} else {
+		return false
+	}
+	return true
 }
 
 func getCommand(k uint8) string {
@@ -171,6 +193,17 @@ func getCommand(k uint8) string {
 		}
 	}
 	return ""
+}
+
+func sendMidi(m []midi.Message) {
+	send, err := midi.SendTo(midiOutput)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	for _, msg := range m {
+		send(msg)
+	}
 }
 
 func receiveMidi(message midi.Message, timestamps int32) {
@@ -268,29 +301,6 @@ func receiveMidi(message midi.Message, timestamps int32) {
 		}
 	}
 
-}
-
-func sendMidi(m []midi.Message) {
-	send, err := midi.SendTo(midiOutput)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	for _, msg := range m {
-		send(msg)
-	}
-}
-
-func checkMidiConnection() bool {
-	if midiInput != nil {
-		if !midiInput.IsOpen() {
-			retryConnect()
-			return false
-		}
-	} else {
-		return false
-	}
-	return true
 }
 
 // only writes messages, reader is already looping

@@ -2,7 +2,7 @@
 
 Connect a Mackie Control (or compatible MCU) to OBS
 
-#### What
+### What
 
 This small application creates a bridge between OBS and a Mackie Control (or compatible) fader controller. It allows controlling the OBS audio channels through the hardware faders as well as executing OBS keyboard shortcuts via buttons on the control surface.
 
@@ -10,7 +10,7 @@ Its written in golang so the executable has pretty much no external dependencies
 
 I created this for myself but it was in a well enough state (configurable etc) that I decided to release it, it comes with no warranties.
 
-#### How
+### How
 
 The application runs standalone alongside of OBS, it connects via MIDI to the MCU controller and via websockets to OBS. It then allows controlling the OBS audio channels as well as trigger any mapped buttons in OBS.
 
@@ -48,7 +48,7 @@ The standard mapping is as follows:
 - `Stop` - Stop stream
 - `Rec` - Start recording
 
-#### Installation
+### Installation
 
 On Windows and Linux just put the binary somewhere and run it, for MacOS theres a homebrew tap to install the latest version:
 
@@ -56,7 +56,7 @@ On Windows and Linux just put the binary somewhere and run it, for MacOS theres 
 
 which can then be run from the command line using `obs-mcu`
 
-#### Configuration
+### Configuration
 
 ##### Basic Rundown
 
@@ -110,11 +110,11 @@ play = STATE:StreamState
 
 #### Caveats
 
-Handling of MIDI device disconnects is currently not very graceful, you might have to restart the app when the MIDI ports change (or it crashes all by itself 🙂). Also you have to connect the MIDI device before starting the app. An update of the go-midi library to v2 should hopefully remedy this.
+Handling of MIDI device disconnects is currently not very graceful, it might take a while until the app detects changes in the MIDI setup.
 
 Theres afaict no way to get the "hidden" state of audio channels, so they will always display on the MCU even if they're hidden in OBS. As a workaround you can simply name these channels so that they appear all the way on the left and then press the "channel right" button until all channels you don't want to see are hidden.
 
-#### TODO / Future
+### TODO / Future
 
 Heres a list of planned features I might get around to work on:
 
@@ -131,9 +131,9 @@ Heres a list of planned features I might get around to work on:
 ##### Internal
 
 - [x] Update to go-midi v2
-- [ ] Better handling of MIDI disconnects
+- [x] Better handling of MIDI disconnects
 
-#### Development
+### Development
 
 Building should be straightforward, on linux you need to have libasound2-dev available.
 
@@ -146,6 +146,6 @@ Theres basically two runloops, one for the connection to the MCU and one for the
 
 Having just two runloops instead of a heap of go routines makes it easy to track the control flow logic so theres no need for excessive locking and backckecking.
 
-#### Thanks
+### Thanks
 
 Thanks to [chabad360](https://github.com/chabad360) for his [gomcu](https://github.com/chabad360/gomcu) code which is integrated in this app.
