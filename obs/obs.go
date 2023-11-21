@@ -194,7 +194,6 @@ func processObsMessage(event interface{}) {
 	//TODO: special inputs changed
 	case *events.InputActiveStateChanged:
 		//log.Printf("%s's active is now %t", e.InputName, e.VideoActive)
-		//TODO: cache and deliver together
 		channels.SetVisible(e.InputName, e.VideoActive)
 	case *events.InputMuteStateChanged:
 		//log.Printf("%s's mute is now %t", e.InputName, e.InputMuted)
@@ -210,7 +209,6 @@ func processObsMessage(event interface{}) {
 	case *events.InputAudioMonitorTypeChanged:
 		//log.Printf("%s's monitor type is now %s", e.InputName, e.MonitorType)
 		channels.SetMonitorType(e.InputName, e.MonitorType)
-		// TODO: rec/solo
 	case *events.InputCreated:
 		//log.Printf("%s's been created", e.InputName)
 		channels.AddInput(e.InputName)

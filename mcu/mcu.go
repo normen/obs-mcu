@@ -72,18 +72,6 @@ func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	go runLoop()
 }
 
-// TODO: move elsewhere
-func SendMidi(m []midi.Message) {
-	send, err := midi.SendTo(midiOutput)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	for _, msg := range m {
-		send(msg)
-	}
-}
-
 func connect() {
 	var err error
 	disconnect()
@@ -267,6 +255,17 @@ func receiveMidi(message midi.Message, timestamps int32) {
 		}
 	}
 
+}
+
+func sendMidi(m []midi.Message) {
+	send, err := midi.SendTo(midiOutput)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	for _, msg := range m {
+		send(msg)
+	}
 }
 
 func checkMidiConnection() bool {

@@ -298,7 +298,6 @@ func (l *ChannelList) SyncMcu() {
 
 // TODO: other way to get active ones initially?
 func (l *ChannelList) UpdateVisible() {
-	//TODO: calling this here to set them enabled, make this better!
 	resp, err := client.Scenes.GetCurrentProgramScene()
 	if err == nil {
 		list, err2 := client.SceneItems.GetSceneItemList(&sceneitems.GetSceneItemListParams{SceneName: resp.CurrentProgramSceneName})
@@ -326,7 +325,6 @@ func (l *ChannelList) UpdateVisible() {
 	} else {
 		log.Print(err)
 	}
-	//TODO here?
 	l.sync()
 }
 

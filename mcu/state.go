@@ -67,7 +67,7 @@ func (m *McuState) SetFaderLevel(fader byte, level float64) {
 		channel := gomcu.Channel(fader)
 		if !m.FaderTouch[fader] {
 			x := []midi.Message{gomcu.SetFaderPos(channel, uint16(newLevel))}
-			SendMidi(x)
+			sendMidi(x)
 			if m.Debug {
 				log.Print(x)
 			}
@@ -112,7 +112,7 @@ func (m *McuState) SendLed(num byte, state bool) {
 			mstate = gomcu.StateOff
 		}
 		x := []midi.Message{gomcu.SetLED(gomcu.Switch(num), mstate)}
-		SendMidi(x)
+		sendMidi(x)
 		if m.Debug {
 			log.Print(x)
 		}
@@ -122,7 +122,7 @@ func (m *McuState) SendLed(num byte, state bool) {
 func (m *McuState) SetAssignText(text []rune) {
 	if m.Assign[0] != text[0] || m.Assign[1] != text[1] {
 		x := []midi.Message{gomcu.SetDigit(gomcu.AssignLeft, gomcu.Char(text[0])), gomcu.SetDigit(gomcu.AssignRight, gomcu.Char(text[1]))}
-		SendMidi(x)
+		sendMidi(x)
 		m.Assign = text
 		if m.Debug {
 			log.Print(x)
@@ -139,7 +139,7 @@ func (m *McuState) SetChannelText(fader byte, text string, lower bool) {
 	if m.Text[idx:idx+6] != text {
 		m.Text = fmt.Sprintf("%s%s%s", m.Text[0:idx], text, m.Text[idx+6:])
 		x := []midi.Message{gomcu.SetLCD(idx, text)}
-		SendMidi(x)
+		sendMidi(x)
 		if m.Debug {
 			log.Print(x)
 		}
