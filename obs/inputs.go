@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/andreykaipov/goobs/api/requests/inputs"
@@ -19,11 +20,14 @@ type Channel struct {
 	Volume      float64
 	MonitorType string
 	DelayMS     float64
-	Tracks      []bool
+	Tracks      map[string]bool
 }
 
-type ChangeSet struct {
-	ChangedChannels []Channel
+func NewChannel(name string) *Channel {
+	return &Channel{
+		Name:   name,
+		Tracks: make(map[string]bool),
+	}
 }
 
 type ChannelList struct {
@@ -93,8 +97,8 @@ func (l *ChannelList) GetVisibleNumber(name string) int {
 
 func (l *ChannelList) AddChannel(name string) {
 	if _, ok := l.inputs[name]; !ok {
-		c := Channel{Name: name, Volume: 0, Pan: 0, Muted: true}
-		l.inputs[name] = &c
+		c := NewChannel(name)
+		l.inputs[name] = c
 		l.getBaseInfos(name)
 	}
 }
@@ -154,6 +158,7 @@ func (l *ChannelList) SetSelected(fader byte, selected bool) {
 			FaderNumber: fader,
 			Value:       true,
 		}
+		l.sync()
 	}
 }
 
@@ -218,12 +223,30 @@ func (l *ChannelList) SetVolume(name string, volume float64) {
 	}
 }
 
-func (l *ChannelList) SetTracks(name string, tracksEnabled map[int]bool) {
+func (l *ChannelList) SetTrack(idx byte, state bool) {
+	if channel, ok := l.inputs[l.SelectedChannel]; ok {
+		strIdx := fmt.Sprintf("%v", idx+1)
+		if stateCur, ok := channel.Tracks[strIdx]; ok {
+			channel.Tracks[strIdx] = !stateCur
+			l.sync()
+		}
+	}
+}
+
+func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
 	if channel, ok := l.inputs[name]; ok {
-		for i, enabled := range channel.Tracks {
-			if enabled != tracksEnabled[i] {
-				channel.Tracks[i] = tracksEnabled[i]
-				break
+		channel.Tracks = tracksEnabled
+		if name == l.SelectedChannel {
+			for i, enabled := range channel.Tracks {
+				idx, err := strconv.Atoi(i)
+				if err == nil {
+					fromObs <- msg.TrackEnableMessage{
+						TrackNumber: byte(idx),
+						Value:       enabled,
+					}
+				} else {
+					log.Println(err)
+				}
 			}
 		}
 	}
@@ -312,6 +335,20 @@ func (l *ChannelList) SyncMcu() {
 		fromObs <- msg.SelectMessage{
 			FaderNumber: 0,
 			Value:       false,
+		}
+	}
+	if channel, ok := l.inputs[l.SelectedChannel]; ok {
+		for i, enabled := range channel.Tracks {
+			idx, err := strconv.Atoi(i)
+			if err == nil {
+				idx = idx - 1
+				fromObs <- msg.TrackEnableMessage{
+					TrackNumber: byte(idx),
+					Value:       enabled,
+				}
+			} else {
+				log.Println(err)
+			}
 		}
 	}
 	//TODO: spaghetti
@@ -431,8 +468,11 @@ func (l *ChannelList) getBaseInfos(inputName string) {
 	} else {
 		log.Print(err)
 	}
-	//TODO:TRACKS
-	//inputList.SetTracks(inputName, tracks.InputAudioTracks)
-	//log.Println(tracks.InputAudioTracks)
-	// TODO: get the rest of the info
+	tracks, err := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
+	if err == nil {
+		l.SetTracks(inputName, map[string]bool(*tracks.InputAudioTracks))
+		l.SetDelayMS(inputName, sync.InputAudioSyncOffset)
+	} else {
+		log.Print(err)
+	}
 }

@@ -41,6 +41,11 @@ type SelectMessage struct {
 	Value       bool
 }
 
+type TrackEnableMessage struct {
+	TrackNumber byte
+	Value       bool
+}
+
 type FaderMessage struct {
 	FaderNumber byte
 	FaderValue  float64

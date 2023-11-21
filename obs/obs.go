@@ -173,6 +173,8 @@ func processMcuMessage(message interface{}) {
 		channels.ChangeFaderBank(e.ChangeAmount)
 	case msg.SelectMessage:
 		channels.SetSelected(e.FaderNumber, e.Value)
+	case msg.TrackEnableMessage:
+		channels.SetTrack(e.TrackNumber, e.Value)
 	case msg.UpdateRequest:
 		channels.SyncMcu()
 	case msg.VPotChangeMessage:
@@ -221,6 +223,7 @@ func processObsMessage(event interface{}) {
 	//log.Printf("Program change")
 	//channels.UpdateVisible()
 	case *events.InputAudioTracksChanged:
+		channels.SetTracks(e.InputName, map[string]bool(*e.InputAudioTracks))
 	case *events.InputAudioBalanceChanged:
 		channels.SetPan(e.InputName, e.InputAudioBalance)
 		//log.Printf("%s's audio tracks changed: %v", e.InputName, e.InputAudioTracks)

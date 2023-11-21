@@ -109,6 +109,11 @@ func (m *McuState) SetSelectState(fader byte, state bool) {
 	}
 }
 
+func (m *McuState) SetTrackEnabledState(track byte, state bool) {
+	num := byte(gomcu.Read) + track
+	m.SendLed(num, state)
+}
+
 func (m *McuState) SendLed(num byte, state bool) {
 	if m.LedStates[num] != state {
 		//log.Printf("Sending led %v, %t", num, state)

@@ -30,6 +30,10 @@ The `Rec` buttons set the monitor mode for the channel to "monitor only".
 
 If neither Rec nor Solo are lit the monitor mode is "off".
 
+The `Select` buttons allow you to select a channed to display its enabled tracks in the automation section.
+
+The automation section (buttons `Read` -> `Group`) allows enabling the single output stream tracks for an audio source.
+
 You can use the `Channel/Bank` buttons to see more channels in case you have more than 8 audio sources. The displays show the names of the channels, shortened to fit the MCU default length of 6 characters.
 
 The rest of the fader section including the assign buttons are not mappable as they are kept free for future feature updates.
@@ -117,10 +121,10 @@ Heres a list of planned features I might get around to work on:
 ##### Features
 
 - [ ] Allow loading different config files
-- [ ] Select channels (for feature below)
-- [ ] Allow selection of output tracks for selected channel
+- [X] Select channels (for feature below)
+- [X] Allow selection of output tracks for selected channel
 - [x] Allow use of Vpots to control delay, show in display
-- [ ] Allow assigning states in OBS to LEDs
+- [X] Allow assigning states in OBS to LEDs
 - [ ] Show meters
 - [ ] Video fade on master fader
 

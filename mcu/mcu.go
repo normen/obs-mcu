@@ -221,6 +221,10 @@ func receiveMidi(message midi.Message, timestamps int32) {
 			fromMcu <- msg.SelectMessage{
 				FaderNumber: k - byte(gomcu.Select1),
 			}
+		} else if gomcu.Switch(k) >= gomcu.Read && gomcu.Switch(k) <= gomcu.Group {
+			fromMcu <- msg.TrackEnableMessage{
+				TrackNumber: k - byte(gomcu.Read),
+			}
 		} else if len(gomcu.Names) > int(k) {
 			command := getCommand(k)
 			if len(command) > 0 {
@@ -311,6 +315,8 @@ func runLoop() {
 			switch e := message.(type) {
 			case msg.FaderMessage:
 				state.SetFaderLevel(e.FaderNumber, e.FaderValue)
+			case msg.TrackEnableMessage:
+				state.SetTrackEnabledState(e.TrackNumber, e.Value)
 			case msg.MuteMessage:
 				state.SetMuteState(e.FaderNumber, e.Value)
 			case msg.ChannelTextMessage:
