@@ -80,6 +80,7 @@ func connect() {
 	if err != nil {
 		log.Printf("Could not find MIDI Input '%s'", config.Config.Midi.PortIn)
 		retryConnect()
+		return
 	}
 
 	midiOutput, err = midi.FindOutPort(config.Config.Midi.PortOut)
@@ -93,11 +94,13 @@ func connect() {
 	if err != nil {
 		log.Printf("Could not open MIDI Input '%s'", config.Config.Midi.PortOut)
 		retryConnect()
+		return
 	}
 	err = midiOutput.Open()
 	if err != nil {
 		log.Printf("Could not open MIDI Output '%s'", config.Config.Midi.PortOut)
 		retryConnect()
+		return
 	}
 
 	//TODO: reset
@@ -107,12 +110,14 @@ func connect() {
 	if err != nil {
 		log.Print(err)
 		retryConnect()
+		return
 	}
 
 	send, err := midi.SendTo(midiOutput)
 	if err != nil {
 		log.Print(err)
 		retryConnect()
+		return
 	}
 
 	//m := []midi.Message{gomcu.SetDigit(gomcu.AssignLeft, 'H'), gomcu.SetDigit(gomcu.AssignRight, 'W'), gomcu.SetLCD(0, "Hello,"), gomcu.SetLCD(56, "World")}
