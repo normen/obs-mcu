@@ -25,7 +25,6 @@ var connection chan int
 var sync chan int
 var connected bool
 
-//var connectCheck chan time.
 var connectRetry *time.Timer
 var channels *ChannelList
 var states *ObsStates
@@ -48,7 +47,6 @@ func InitObs(in chan interface{}, out chan interface{}) {
 }
 
 func connect() error {
-	//interrupt <- os.Interrupt
 	if client != nil {
 		client.Disconnect()
 	}

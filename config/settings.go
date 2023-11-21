@@ -31,7 +31,8 @@ type Midi struct {
 }
 
 type McuFaders struct {
-	ShowMeters bool
+	ShowMeters    bool
+	SimulateTouch bool
 	//Fader1      string
 	//Fader2      string
 	//Fader3      string
@@ -243,7 +244,8 @@ var Config = IniFile{
 		PortOut: "MCU Mackie Control Port 1",
 	},
 	&McuFaders{
-		ShowMeters: false,
+		ShowMeters:    false,
+		SimulateTouch: false,
 		//Fader1:      "",
 		//Fader2:      "",
 		//Fader3:      "",

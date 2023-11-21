@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/normen/obs-mcu/config"
 	"github.com/normen/obs-mcu/gomcu"
 	"gitlab.com/gomidi/midi/v2"
 )
@@ -36,7 +37,7 @@ func NewMcuState() *McuState {
 	return &state
 }
 
-func (m *McuState) Update() {
+func (m *McuState) UpdateTouch() {
 	for i, level := range m.FaderLevelsBuffered {
 		if m.FaderTouch[i] {
 			now := time.Now()
@@ -51,9 +52,13 @@ func (m *McuState) Update() {
 	}
 }
 
-func (m *McuState) SetFaderTouched(fader byte) {
-	state.FaderTouch[fader] = true
-	state.FaderTouchTimeout[fader] = time.Now()
+func (m *McuState) SetFaderTouched(fader byte, touched bool) {
+	state.FaderTouch[fader] = touched
+	if !touched {
+		m.SetFaderLevel(fader, m.FaderLevelsBuffered[fader])
+	} else if config.Config.McuFaders.SimulateTouch {
+		state.FaderTouchTimeout[fader] = time.Now()
+	}
 }
 
 func (m *McuState) SetFaderLevel(fader byte, level float64) {

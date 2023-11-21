@@ -18,13 +18,10 @@ import (
 
 var state *McuState
 
-//var drv *driver.Driver
 var midiInput drivers.In
 var midiOutput drivers.Out
 var midiStop func()
 
-//var midiWriter *writer.Writer
-//var midiReader *reader.Reader
 var connectRetry *time.Timer
 var fromObs chan interface{}
 var fromMcu chan interface{}
@@ -63,7 +60,6 @@ func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	signal.Notify(interrupt, os.Interrupt)
 	state = NewMcuState()
 	connection <- 0
-	//connect()
 	go runLoop()
 }
 
@@ -198,7 +194,14 @@ func receiveMidi(message midi.Message, timestamps int32) {
 	var val int16
 	var uval uint16
 	if message.GetNoteOn(&c, &k, &v) {
-		// avoid noteoffs
+		// fader touch - handle locally
+		if gomcu.Switch(k) >= gomcu.Fader1 && gomcu.Switch(k) <= gomcu.Fader8 {
+			internalMcu <- msg.RawFaderTouchMessage{
+				FaderNumber: k - byte(gomcu.Fader1),
+				Pressed:     v == 127,
+			}
+		}
+		// avoid noteoffs for the other commands
 		if v == 0 {
 			return
 		}
@@ -216,12 +219,6 @@ func receiveMidi(message midi.Message, timestamps int32) {
 			}
 			fromMcu <- msg.BankMessage{
 				ChangeAmount: amount,
-			}
-		} else if gomcu.Switch(k) >= gomcu.Fader1 && gomcu.Switch(k) <= gomcu.Fader8 {
-			// fader touch - handle locally
-			internalMcu <- msg.RawFaderTouchMessage{
-				FaderNumber: k - byte(gomcu.Fader1),
-				Pressed:     v == 127,
 			}
 		} else if gomcu.Switch(k) >= gomcu.Mute1 && gomcu.Switch(k) <= gomcu.Mute8 {
 			fromMcu <- msg.MuteMessage{
@@ -256,7 +253,6 @@ func receiveMidi(message midi.Message, timestamps int32) {
 						fromMcu <- msg.KeyMessage{
 							HotkeyName: cmdString,
 						}
-						//log.Printf("Got key press for %s", cmdString)
 					}
 				}
 			}
@@ -276,7 +272,6 @@ func receiveMidi(message midi.Message, timestamps int32) {
 		}
 
 	} else if message.GetPitchBend(&c, &val, &uval) {
-		//log.Printf("Value for fader #%d: %f", channel, value)
 		internalMcu <- msg.RawFaderMessage{
 			FaderNumber: c,
 			FaderValue:  val,
@@ -292,11 +287,19 @@ func receiveMidi(message midi.Message, timestamps int32) {
 
 // only writes messages, reader is already looping
 func runLoop() {
-	timer := time.NewTicker(300 * time.Millisecond)
+	// TODO: avoid ticker altogether when no touch
+	var timec <-chan time.Time
+	if config.Config.McuFaders.SimulateTouch {
+		timec = time.NewTicker(300 * time.Millisecond).C
+	} else {
+		timec = make(<-chan time.Time)
+	}
 	for {
 		select {
-		case <-timer.C:
-			state.Update()
+		case <-timec:
+			if config.Config.McuFaders.SimulateTouch {
+				state.UpdateTouch()
+			}
 		case state := <-connection:
 			if state == 0 {
 				connect()
@@ -325,7 +328,6 @@ func runLoop() {
 			case msg.SelectMessage:
 				state.SetSelectState(e.FaderNumber, e.Value)
 			case msg.LedMessage:
-				//state.SetLed(e.LedName
 				if num, ok := gomcu.IDs[e.LedName]; ok {
 					state.SendLed(byte(num), e.LedState)
 				} else {
@@ -335,9 +337,9 @@ func runLoop() {
 		case message := <-internalMcu:
 			switch e := message.(type) {
 			case msg.RawFaderMessage:
-				state.SetFaderTouched(e.FaderNumber)
+				state.SetFaderTouched(e.FaderNumber, true)
 			case msg.RawFaderTouchMessage:
-				state.SetFaderTouched(e.FaderNumber)
+				state.SetFaderTouched(e.FaderNumber, e.Pressed)
 			}
 		}
 	}
