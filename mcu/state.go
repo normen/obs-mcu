@@ -38,13 +38,6 @@ func NewMcuState() *McuState {
 	return &state
 }
 
-func (m *McuState) SetVPotLed(vpot byte, state byte) {
-	if m.VPotLedStates[vpot] != state {
-		//TODO:send
-		m.VPotLedStates[vpot] = state
-	}
-}
-
 func (m *McuState) Update() {
 	for i, level := range m.FaderLevelsBuffered {
 		if m.FaderTouch[i] {
@@ -92,24 +85,25 @@ func (m *McuState) SetMonitorState(fader byte, state string) {
 	num2 := byte(gomcu.Solo1) + fader
 	switch state {
 	case "OBS_MONITORING_TYPE_NONE":
-		m.sendLed(num, false)
-		m.sendLed(num2, false)
+		m.SendLed(num, false)
+		m.SendLed(num2, false)
 	case "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT":
-		m.sendLed(num, false)
-		m.sendLed(num2, true)
+		m.SendLed(num, false)
+		m.SendLed(num2, true)
 	case "OBS_MONITORING_TYPE_MONITOR_ONLY":
-		m.sendLed(num, true)
-		m.sendLed(num2, false)
+		m.SendLed(num, true)
+		m.SendLed(num2, false)
 	}
 }
 
 func (m *McuState) SetMuteState(fader byte, state bool) {
 	num := byte(gomcu.Mute1) + fader
-	m.sendLed(num, state)
+	m.SendLed(num, state)
 }
 
-func (m *McuState) sendLed(num byte, state bool) {
+func (m *McuState) SendLed(num byte, state bool) {
 	if m.LedStates[num] != state {
+		//log.Printf("Sending led %v, %t", num, state)
 		m.LedStates[num] = state
 		var mstate gomcu.State
 		if state {

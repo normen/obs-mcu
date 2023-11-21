@@ -292,6 +292,8 @@ func (l *ChannelList) SyncMcu() {
 	fromObs <- msg.AssignLEDMessage{
 		Characters: asgn,
 	}
+	//TODO: spaghetti
+	states.SendAll()
 }
 
 // TODO: other way to get active ones initially?

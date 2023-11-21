@@ -36,18 +36,13 @@ The rest of the fader section including the assign buttons are not mappable as t
 
 ##### Buttons
 
-Almost all other buttons except the assign and automation buttons are freely assignable through the config file (see below) but the standard mapping is this:
+Almost all other buttons except the assign and automation buttons are freely assignable to any OBS keyboard shortcut through the config file (see below).
+
+The standard mapping is as follows:
 
 - `Play` - Start stream
 - `Stop` - Stop stream
 - `Rec` - Start recording
-
-To map a button you have to find the internal OBS key name and assign it in the config file, prefixed with `KEY:`, like such:
-
-```
-[mcu_buttons]
-play = KEY:OBSBasic.StartStreaming
-```
 
 #### Installation
 
@@ -81,6 +76,29 @@ All configuration happens through a config file. The config file is created on t
   - `(HOME)/.config/obs-mcu`
 
 You have to specify the OBS host, its password, and the MIDI in and out ports.
+
+##### Buttons
+
+To map a button you have to find the internal OBS key name and assign it in the config file, prefixed with `KEY:`, like so:
+
+```
+[mcu_buttons]
+play = KEY:OBSBasic.StartStreaming
+```
+
+##### LEDs
+
+Some buttons have LEDs which can be assigned with states in OBS, the supported states are (for now):
+
+- `StreamState`, when OBS is streaming
+- `RecordState`, when OBS is recording
+
+They have to be prefixed with `STATE:`, like so:
+
+```
+[mcu_leds]
+play = STATE:StreamState
+```
 
 #### Command line options
 

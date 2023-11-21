@@ -52,8 +52,8 @@ type MonitorTypeMessage struct {
 }
 
 type LedMessage struct {
-	LedNumber byte
-	LedValue  bool
+	LedName  string
+	LedState bool
 }
 
 type TextMessage struct {

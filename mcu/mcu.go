@@ -311,6 +311,13 @@ func runLoop() {
 				state.SetAssignText(e.Characters)
 			case msg.MonitorTypeMessage:
 				state.SetMonitorState(e.FaderNumber, e.MonitorType)
+			case msg.LedMessage:
+				//state.SetLed(e.LedName
+				if num, ok := gomcu.IDs[e.LedName]; ok {
+					state.SendLed(byte(num), e.LedState)
+				} else {
+					log.Printf("Could not find led with id %v", e.LedName)
+				}
 			}
 		case message := <-internalMcu:
 			switch e := message.(type) {

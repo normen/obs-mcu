@@ -27,6 +27,7 @@ var connected bool
 //var connectCheck chan time.
 var connectRetry *time.Timer
 var channels *ChannelList
+var states *ObsStates
 var fromMcu chan interface{}
 var fromObs chan interface{}
 var clientInputChannel chan interface{}
@@ -35,6 +36,7 @@ func InitObs(in chan interface{}, out chan interface{}) {
 	fromMcu = in
 	fromObs = out
 	channels = NewChannelList()
+	states = NewObsStates()
 	interrupt = make(chan os.Signal, 1)
 	connection = make(chan int, 1)
 	sync = make(chan int, 1)
@@ -235,6 +237,10 @@ func processObsMessage(event interface{}) {
 		log.Print(e.Inputs)
 	case *websocket.CloseError:
 		log.Print("OBS exited")
+	case *events.StreamStateChanged:
+		states.SetState("StreamState", e.OutputActive)
+	case *events.RecordStateChanged:
+		states.SetState("RecordState", e.OutputActive)
 	default:
 		//log.Printf("Unhandled: %#v", e)
 		//log.Print(e)
