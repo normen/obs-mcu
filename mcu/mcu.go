@@ -337,7 +337,9 @@ func runLoop() {
 		case message := <-internalMcu:
 			switch e := message.(type) {
 			case msg.RawFaderMessage:
-				state.SetFaderTouched(e.FaderNumber, true)
+				if config.Config.McuFaders.SimulateTouch {
+					state.SetFaderTouched(e.FaderNumber, true)
+				}
 			case msg.RawFaderTouchMessage:
 				state.SetFaderTouched(e.FaderNumber, e.Pressed)
 			}
