@@ -64,10 +64,10 @@ func (m *McuState) SetFaderTouched(fader byte, touched bool) {
 func (m *McuState) SetFaderLevel(fader byte, level float64) {
 	m.FaderLevelsBuffered[fader] = level
 	newLevel := FaderFloatToInt(level)
-	if m.FaderLevels[fader] != newLevel {
-		m.FaderLevels[fader] = newLevel
-		channel := gomcu.Channel(fader)
-		if !m.FaderTouch[fader] {
+	if !m.FaderTouch[fader] {
+		if m.FaderLevels[fader] != newLevel {
+			m.FaderLevels[fader] = newLevel
+			channel := gomcu.Channel(fader)
 			x := []midi.Message{gomcu.SetFaderPos(channel, uint16(newLevel))}
 			sendMidi(x)
 			if m.Debug {
