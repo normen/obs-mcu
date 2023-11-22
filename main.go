@@ -20,7 +20,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.4.0"
+var VERSION string = "v0.4.1"
 var interrupt chan os.Signal
 
 // TODO: config file command line option
@@ -38,14 +38,18 @@ func main() {
 		ShowMidiPorts()
 	} else if configureMidi {
 		config.InitConfig()
-		UserConfigure()
-		startRunloops()
+		if UserConfigure() {
+			startRunloops()
+		}
 	} else {
 		config.InitConfig()
 		if config.Config.Midi.PortIn == "" {
-			UserConfigure()
+			if UserConfigure() {
+				startRunloops()
+			}
+		} else {
+			startRunloops()
 		}
-		startRunloops()
 	}
 }
 
@@ -70,7 +74,7 @@ func ShowMidiPorts() {
 	}
 }
 
-func UserConfigure() {
+func UserConfigure() bool {
 	fmt.Println("*** CONFIGURING MIDI ***")
 	fmt.Println("")
 	inputs := mcu.GetMidiInputs()
@@ -81,11 +85,11 @@ func UserConfigure() {
 	fmt.Println()
 	fmt.Print("Enter input port number and press [enter]: ")
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "[\n\r]", "")
+	text = strings.TrimSpace(text)
 	num, err := strconv.Atoi(text)
 	if err != nil || num <= 0 || num > len(inputs) {
 		fmt.Println("Please enter only valid numbers")
-		return
+		return false
 	}
 	config.Config.Midi.PortIn = inputs[num-1]
 
@@ -97,11 +101,11 @@ func UserConfigure() {
 	fmt.Println()
 	fmt.Print("Enter output port number and press [enter]: ")
 	text, _ = reader.ReadString('\n')
-	text = strings.Replace(text, "[\n\r]", "")
+	text = strings.TrimSpace(text)
 	num, err = strconv.Atoi(text)
 	if err != nil || num <= 0 || num > len(inputs) {
 		fmt.Println("Please enter only valid numbers")
-		return
+		return false
 	}
 	config.Config.Midi.PortOut = outputs[num-1]
 
@@ -112,14 +116,14 @@ func UserConfigure() {
 	fmt.Println("Please enter the OBS host name and websocket password, for (current) press [enter]")
 	fmt.Printf("Enter host and port (%v): ", config.Config.General.ObsHost)
 	text, _ = reader.ReadString('\n')
-	text = strings.Replace(text, "[\n\r]", "")
+	text = strings.TrimSpace(text)
 	if text != "" {
 		config.Config.General.ObsHost = text
 	}
 	fmt.Println()
 	fmt.Printf("Enter password or press [enter] to keep current: ")
 	text, _ = reader.ReadString('\n')
-	text = strings.Replace(text, "[\n\r]", "")
+	text = strings.TrimSpace(text)
 	if text != "" {
 		config.Config.General.ObsPassword = text
 	}
@@ -129,4 +133,5 @@ func UserConfigure() {
 	if err != nil {
 		log.Println(err)
 	}
+	return true
 }
