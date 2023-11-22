@@ -333,10 +333,12 @@ func (l *ChannelList) SyncMcu() {
 			Text:        "",
 		}
 	}
+	// assign display
 	asgn := []rune{'0' + rune((l.FirstChannel+1)/10%10), '0' + rune((l.FirstChannel+1)%10)}
 	fromObs <- msg.AssignLEDMessage{
 		Characters: asgn,
 	}
+	// select button
 	selectNo := l.GetVisibleNumber(l.SelectedChannel)
 	if selectNo != -1 {
 		fromObs <- msg.SelectMessage{
@@ -349,6 +351,7 @@ func (l *ChannelList) SyncMcu() {
 			Value:       false,
 		}
 	}
+	// track enabled buttons
 	if channel, ok := l.inputs[l.SelectedChannel]; ok {
 		for i, enabled := range channel.Tracks {
 			idx, err := strconv.Atoi(i)
@@ -360,6 +363,13 @@ func (l *ChannelList) SyncMcu() {
 				}
 			} else {
 				log.Println(err)
+			}
+		}
+	} else {
+		for i := 0; i < 6; i++ {
+			fromObs <- msg.TrackEnableMessage{
+				TrackNumber: byte(i),
+				Value:       false,
 			}
 		}
 	}
