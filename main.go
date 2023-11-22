@@ -103,7 +103,7 @@ func UserConfigure() bool {
 	text, _ = reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	num, err = strconv.Atoi(text)
-	if err != nil || num <= 0 || num > len(inputs) {
+	if err != nil || num <= 0 || num > len(outputs) {
 		fmt.Println("Please enter only valid numbers")
 		return false
 	}
