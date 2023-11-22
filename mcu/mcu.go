@@ -327,6 +327,8 @@ func runLoop() {
 				state.SetMonitorState(e.FaderNumber, e.MonitorType)
 			case msg.SelectMessage:
 				state.SetSelectState(e.FaderNumber, e.Value)
+			case msg.MeterMessage:
+				state.SetMeter(e.FaderNumber, e.Value)
 			case msg.LedMessage:
 				if num, ok := gomcu.IDs[e.LedName]; ok {
 					state.SendLed(byte(num), e.LedState)

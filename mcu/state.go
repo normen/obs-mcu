@@ -15,6 +15,7 @@ type McuState struct {
 	FaderLevels         []int16
 	FaderLevelsBuffered []float64
 	FaderTouch          []bool
+	MeterLevels         []byte
 	FaderTouchTimeout   []time.Time
 	LedStates           map[byte]bool
 	VPotLedStates       map[byte]byte
@@ -28,6 +29,7 @@ func NewMcuState() *McuState {
 	state.Text = "                                                                                                                "
 	state.Assign = []rune{' ', ' '}
 	state.FaderLevels = append(state.FaderLevels, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	state.MeterLevels = append(state.MeterLevels, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	state.FaderLevelsBuffered = append(state.FaderLevelsBuffered, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	state.FaderTouch = []bool{false, false, false, false, false, false, false, false, false}
 	now := time.Now()
@@ -151,6 +153,37 @@ func (m *McuState) SetChannelText(fader byte, text string, lower bool) {
 	if m.Text[idx:idx+6] != text {
 		m.Text = fmt.Sprintf("%s%s%s", m.Text[0:idx], text, m.Text[idx+6:])
 		x := []midi.Message{gomcu.SetLCD(idx, text)}
+		sendMidi(x)
+		if m.Debug {
+			log.Print(x)
+		}
+	}
+}
+
+func (m *McuState) SetMeter(fader byte, value float64) {
+	var outByte byte
+	if value > -6 {
+		outByte = byte(gomcu.MoreThan6)
+	} else if value > -8 {
+		outByte = byte(gomcu.MoreThan8)
+	} else if value > -14 {
+		outByte = byte(gomcu.MoreThan14)
+	} else if value > -20 {
+		outByte = byte(gomcu.MoreThan20)
+	} else if value > -30 {
+		outByte = byte(gomcu.MoreThan30)
+	} else if value > -40 {
+		outByte = byte(gomcu.MoreThan40)
+	} else if value > -50 {
+		outByte = byte(gomcu.MoreThan50)
+	} else if value > -60 {
+		outByte = byte(gomcu.MoreThan60)
+	} else {
+		outByte = byte(gomcu.LessThan60)
+	}
+	if m.MeterLevels[fader] != outByte {
+		m.MeterLevels[fader] = outByte
+		x := []midi.Message{gomcu.SetMeter(gomcu.Channel(fader), gomcu.MeterLevel(outByte))}
 		sendMidi(x)
 		if m.Debug {
 			log.Print(x)

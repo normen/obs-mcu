@@ -234,7 +234,15 @@ func processObsMessage(event interface{}) {
 		retryConnect()
 		log.Print("Bye")
 	case *events.InputVolumeMeters:
-		log.Print(e.Inputs)
+		for _, v := range e.Inputs {
+			num := channels.GetVisibleNumber(v.InputName)
+			if num != -1 {
+				//TODO: no value available!
+				fromObs <- msg.MeterMessage{
+					FaderNumber: byte(num),
+				}
+			}
+		}
 	case *websocket.CloseError:
 		log.Print("OBS exited")
 	case *events.StreamStateChanged:

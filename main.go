@@ -20,7 +20,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.4.1"
+var VERSION string = "v0.4.2"
 var interrupt chan os.Signal
 
 // TODO: config file command line option

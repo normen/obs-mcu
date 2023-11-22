@@ -50,7 +50,7 @@ func Reset(output drivers.Out) {
 		m = append(m, SetDigit(Digit(uint8(i)+0x40), Char0+DigitDot))
 	}
 	for i := 0; i < LenLines; i++ {
-		m = append(m, SetLCD(i, "A"))
+		m = append(m, SetLCD(i, " "))
 	}
 
 	for _, msg := range m {
@@ -73,6 +73,9 @@ func Reset(output drivers.Out) {
 	}
 	for i := 0; i < LenChannels-1; i++ {
 		m = append(m, SetMeter(Channel(i), ClipOff))
+	}
+	for i := 0; i < LenChannels-1; i++ {
+		m = append(m, SetMeter(Channel(i), LessThan60))
 	}
 	for i := 0; i < LenDigits; i++ {
 		m = append(m, SetDigit(Digit(uint8(i)+0x40), SymbolSpace))

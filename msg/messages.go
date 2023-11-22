@@ -74,6 +74,11 @@ type ChannelTextMessage struct {
 	Lower       bool
 }
 
+type MeterMessage struct {
+	FaderNumber byte
+	Value       float64
+}
+
 type BankMessage struct {
 	ChangeAmount int
 }
