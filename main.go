@@ -81,7 +81,7 @@ func UserConfigure() {
 	fmt.Println()
 	fmt.Print("Enter input port number and press [enter]: ")
 	text, _ := reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
+	text = strings.Replace(text, "[\n\r]", "")
 	num, err := strconv.Atoi(text)
 	if err != nil || num <= 0 || num > len(inputs) {
 		fmt.Println("Please enter only valid numbers")
@@ -97,7 +97,7 @@ func UserConfigure() {
 	fmt.Println()
 	fmt.Print("Enter output port number and press [enter]: ")
 	text, _ = reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
+	text = strings.Replace(text, "[\n\r]", "")
 	num, err = strconv.Atoi(text)
 	if err != nil || num <= 0 || num > len(inputs) {
 		fmt.Println("Please enter only valid numbers")
@@ -112,14 +112,14 @@ func UserConfigure() {
 	fmt.Println("Please enter the OBS host name and websocket password, for (current) press [enter]")
 	fmt.Printf("Enter host and port (%v): ", config.Config.General.ObsHost)
 	text, _ = reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
+	text = strings.Replace(text, "[\n\r]", "")
 	if text != "" {
 		config.Config.General.ObsHost = text
 	}
 	fmt.Println()
 	fmt.Printf("Enter password or press [enter] to keep current: ")
 	text, _ = reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
+	text = strings.Replace(text, "[\n\r]", "")
 	if text != "" {
 		config.Config.General.ObsPassword = text
 	}
