@@ -13,6 +13,7 @@ import (
 	"github.com/andreykaipov/goobs/api/events/subscriptions"
 	"github.com/andreykaipov/goobs/api/requests/general"
 	"github.com/andreykaipov/goobs/api/requests/inputs"
+	"github.com/andreykaipov/goobs/api/requests/scenes"
 	"github.com/andreykaipov/goobs/api/typedefs"
 
 	"github.com/normen/obs-mcu/config"
@@ -76,6 +77,12 @@ func connect() error {
 	}
 	channels.UpdateSpecialInputs()
 	channels.UpdateVisible()
+	scene, err := client.Scenes.GetCurrentProgramScene(&scenes.GetCurrentProgramSceneParams{})
+	if err == nil {
+		fromObs <- msg.DisplayTextMessage{
+			Text: scene.CurrentProgramSceneName,
+		}
+	}
 	connected = true
 	return nil
 }
@@ -218,6 +225,9 @@ func processObsMessage(event interface{}) {
 	case *events.InputRemoved:
 		channels.RemoveChannel(e.InputName)
 	case *events.CurrentProgramSceneChanged:
+		fromObs <- msg.DisplayTextMessage{
+			Text: e.SceneName,
+		}
 	case *events.InputAudioTracksChanged:
 		channels.SetTracks(e.InputName, map[string]bool(*e.InputAudioTracks))
 	case *events.InputAudioBalanceChanged:

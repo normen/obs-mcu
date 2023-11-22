@@ -321,6 +321,8 @@ func runLoop() {
 				state.SetMuteState(e.FaderNumber, e.Value)
 			case msg.ChannelTextMessage:
 				state.SetChannelText(e.FaderNumber, e.Text, e.Lower)
+			case msg.DisplayTextMessage:
+				state.SetDisplayText(e.Text)
 			case msg.AssignLEDMessage:
 				state.SetAssignText(e.Characters)
 			case msg.MonitorTypeMessage:

@@ -74,6 +74,10 @@ type ChannelTextMessage struct {
 	Lower       bool
 }
 
+type DisplayTextMessage struct {
+	Text string
+}
+
 type MeterMessage struct {
 	FaderNumber byte
 	Value       float64
@@ -101,4 +105,7 @@ type RawFaderMessage struct {
 type RawFaderTouchMessage struct {
 	FaderNumber byte
 	Pressed     bool
+}
+
+type UserShortcutRequest struct {
 }

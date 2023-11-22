@@ -20,6 +20,7 @@ type McuState struct {
 	LedStates           map[byte]bool
 	VPotLedStates       map[byte]byte
 	Text                string
+	Display             string
 	Assign              []rune
 	Debug               bool
 }
@@ -138,6 +139,23 @@ func (m *McuState) SetAssignText(text []rune) {
 		x := []midi.Message{gomcu.SetDigit(gomcu.AssignLeft, gomcu.Char(text[0])), gomcu.SetDigit(gomcu.AssignRight, gomcu.Char(text[1]))}
 		sendMidi(x)
 		m.Assign = text
+		if m.Debug {
+			log.Print(x)
+		}
+	}
+}
+
+func (m *McuState) SetDisplayText(text string) {
+	if len(text) > 10 {
+		text = text[:10]
+	} else {
+		text = fmt.Sprintf("%-10s", text)
+	}
+	if m.Display != text {
+		m.Display = text
+		x := []midi.Message{}
+		x = append(x, gomcu.SetTimeDisplay(text)...)
+		sendMidi(x)
 		if m.Debug {
 			log.Print(x)
 		}
