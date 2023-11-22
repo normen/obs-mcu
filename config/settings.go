@@ -240,8 +240,8 @@ var Config = IniFile{
 		ObsPassword: "",
 	},
 	&Midi{
-		PortIn:  "MCU Mackie Control Port 1",
-		PortOut: "MCU Mackie Control Port 1",
+		PortIn:  "",
+		PortOut: "",
 	},
 	&McuFaders{
 		ShowMeters:    false,
@@ -472,22 +472,28 @@ func InitConfig() {
 				section.MapTo(&Config.McuButtons)
 			}
 			//TODO: only save if changes
-			newCfg := ini.Empty()
-			if err = ini.ReflectFromWithMapper(newCfg, &Config, ini.TitleUnderscore); err == nil {
-				err = newCfg.SaveTo(configFilePath)
-			}
+			err = SaveConfig()
 		} else {
-			cfg = ini.Empty()
-			cfg.NameMapper = ini.TitleUnderscore
-			cfg.ValueMapper = os.ExpandEnv
-			if err = ini.ReflectFromWithMapper(cfg, &Config, ini.TitleUnderscore); err == nil {
-				err = cfg.SaveTo(configFilePath)
-			}
+			err = SaveConfig()
 		}
 	}
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func SaveConfig() error {
+	cfg = ini.Empty()
+	cfg.NameMapper = ini.TitleUnderscore
+	cfg.ValueMapper = os.ExpandEnv
+	if err := ini.ReflectFromWithMapper(cfg, &Config, ini.TitleUnderscore); err == nil {
+		if err := cfg.SaveTo(configFilePath); err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+	return nil
 }
 
 func GetConfigFilePath() string {

@@ -58,17 +58,19 @@ which can then be run from the command line using `obs-mcu`
 
 ### Configuration
 
-##### Basic Rundown
+#### Basic Rundown
 
+- Enable websockets in OBS
 - Put `obs-mcu`(`.exe`) executable somewhere
 - Connect the MCU
-- Run `obs-mcu -l` to list all MIDI devices (this also creates the config file)
-- Copy MIDI device name and enter in config file (see below)
-- Enter OBS host and password in config file
 - Run `obs-mcu`
-- Run OBS and control your audio channels
+- On the first start you will be able to configure the MIDI devices and OBS connection
+  - Enter the number of your MIDI in and out device from the list
+  - Enter the OBS host name or keep the default for local operation
+  - Enter the OBS websocket password or keep empty for no password
+- Start OBS and control your audio channels
 
-##### Config file location
+#### Config file
 
 All configuration happens through a config file. The config file is created on the first start, its location is
 
@@ -106,9 +108,10 @@ play = STATE:StreamState
 
 #### Command line options
 
-- `-l` lists the names of all MIDI ports to help with the configuration
+- `-c` configure the basic MIDI and OBS connection settings
+- `-l` lists the names of all MIDI ports
 
-#### Caveats
+### Caveats
 
 Handling of MIDI device disconnects is currently not very graceful, it might take a while until the app detects changes in the MIDI setup.
 
