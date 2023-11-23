@@ -20,6 +20,9 @@ import (
 	"github.com/normen/obs-mcu/msg"
 )
 
+var ExitWithObs bool
+var ShowHotkeyNames bool
+
 var client *goobs.Client
 var interrupt chan os.Signal
 var connection chan int
@@ -81,6 +84,14 @@ func connect() error {
 	if err == nil {
 		fromObs <- msg.DisplayTextMessage{
 			Text: scene.CurrentProgramSceneName,
+		}
+	}
+	if ShowHotkeyNames {
+		hotkeys, err := client.General.GetHotkeyList(&general.GetHotkeyListParams{})
+		if err == nil {
+			for _, key := range hotkeys.Hotkeys {
+				log.Printf("KEY:%v", key)
+			}
 		}
 	}
 	connected = true
@@ -241,6 +252,9 @@ func processObsMessage(event interface{}) {
 		//TODO: this is the only way we reconnect
 		// -> other ways to see if connection dropped?
 		channels.Clear()
+		if ExitWithObs {
+			os.Exit(0)
+		}
 		retryConnect()
 		log.Print("Bye")
 	case *events.InputVolumeMeters:

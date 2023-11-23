@@ -20,7 +20,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.4.4"
+var VERSION string = "v0.4.5"
 var interrupt chan os.Signal
 
 // TODO: config file command line option
@@ -29,6 +29,8 @@ func main() {
 	flag.BoolVar(&showMidi, "l", false, "List all installed MIDI devices")
 	flag.BoolVar(&configureMidi, "c", false, "Configure and start")
 	flag.BoolVar(&showHelp, "h", false, "Show Help")
+	flag.BoolVar(&obs.ExitWithObs, "x", false, "Exit when OBS exits")
+	flag.BoolVar(&obs.ShowHotkeyNames, "k", false, "Show all of OBS hotkey names after connecting")
 	flag.Parse()
 	log.Printf("OBS-MCU %v", VERSION)
 	if showHelp {

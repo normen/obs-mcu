@@ -110,6 +110,8 @@ play = STATE:StreamState
 
 - `-c` configure the basic MIDI and OBS connection settings
 - `-l` lists the names of all MIDI ports
+- `-k` lists the names of all OBS keyboard shortcuts (after connecting)
+- `-x` exits obs-mcu when OBS exits (e.g. to run obs-mcu when OBS starts using Advanced Scene Switcher as described [here](https://github.com/WarmUpTill/SceneSwitcher/wiki/Start-other-programs-when-starting-OBS).
 
 ### Caveats
 
