@@ -243,15 +243,19 @@ func receiveMidi(message midi.Message, timestamps int32) {
 				TrackNumber: k - byte(gomcu.Read),
 			}
 		} else if len(gomcu.Names) > int(k) {
-			command := getCommand(k)
-			if len(command) > 0 {
-				cmdType, cmdString, found := strings.Cut(command, ":")
+			configValue := getCommand(k)
+			if len(configValue) > 0 {
+				cmdType, cmdString, found := strings.Cut(configValue, ":")
 				if found {
 					switch cmdType {
 					case "KEY":
 						//send obs key
-						fromMcu <- msg.KeyMessage{
-							HotkeyName: cmdString,
+						keynames := strings.Split(cmdString, ",")
+						for _, key := range keynames {
+							fromMcu <- msg.KeyMessage{
+								HotkeyName: key,
+							}
+							log.Printf("Send Key: %s", key)
 						}
 					}
 				}

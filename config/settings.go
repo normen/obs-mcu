@@ -422,7 +422,7 @@ var Config = IniFile{
 		Solo:    "",
 		Rewind:  "",
 		FastFwd: "",
-		Stop:    "KEY:OBSBasic.ForceStopStreaming",
+		Stop:    "KEY:OBSBasic.ForceStopStreaming,OBSBasic.StopRecording",
 		Play:    "KEY:OBSBasic.StartStreaming",
 		Record:  "KEY:OBSBasic.StartRecording",
 		Up:      "",
