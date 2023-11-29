@@ -2,6 +2,7 @@ package obs
 
 import (
 	"log"
+	"math"
 	"os"
 	"os/signal"
 	"time"
@@ -172,7 +173,6 @@ func processMcuMessage(message interface{}) {
 				log.Print(err)
 			}
 		}
-
 	case msg.MuteMessage:
 		name := channels.GetVisibleName(e.FaderNumber)
 		if name != "" {
@@ -190,6 +190,8 @@ func processMcuMessage(message interface{}) {
 		channels.ChangeFaderBank(e.ChangeAmount)
 	case msg.SelectMessage:
 		channels.SetSelected(e.FaderNumber, e.Value)
+	case msg.AssignMessage:
+		channels.SetAssignMode(e.Mode)
 	case msg.TrackEnableMessage:
 		channel := channels.SetTrack(e.TrackNumber, e.Value)
 		if channel != nil {
@@ -200,17 +202,47 @@ func processMcuMessage(message interface{}) {
 		}
 	case msg.UpdateRequest:
 		channels.SyncMcu()
+	case msg.VPotButtonMessage:
+		name := channels.GetVisibleName(e.FaderNumber)
+		if name != "" {
+			switch channels.AssignMode {
+			case ModePan:
+				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: name, InputAudioBalance: 0.5})
+				if err != nil {
+					log.Print(err)
+				}
+			case ModeDelay:
+				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: 0.0000001})
+				if err != nil {
+					log.Print(err)
+				}
+			}
+		}
 	case msg.VPotChangeMessage:
 		name := channels.GetVisibleName(e.FaderNumber)
 		if name != "" {
-			newDelay := channels.GetDelayMS(name) + float64(e.ChangeAmount*10)
-			if newDelay < 10 && newDelay > -10 {
-				//TODO: workaround for goobs not sending "0" delay
-				newDelay = 0.001
-			}
-			_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: newDelay})
-			if err != nil {
-				log.Print(err)
+			switch channels.AssignMode {
+			case ModePan:
+				newPan := channels.GetPan(name) + float64(e.ChangeAmount)/50.0
+				newPan = math.Min(newPan, 1.0)
+				newPan = math.Max(newPan, 0.0)
+				if newPan == 0.0 {
+					newPan = 0.0000001
+				}
+				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: name, InputAudioBalance: newPan})
+				if err != nil {
+					log.Print(err)
+				}
+			case ModeDelay:
+				newDelay := channels.GetDelayMS(name) + float64(e.ChangeAmount*10)
+				if newDelay < 10 && newDelay > -10 {
+					//TODO: workaround for goobs not sending "0" delay
+					newDelay = 0.001
+				}
+				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: newDelay})
+				if err != nil {
+					log.Print(err)
+				}
 			}
 		}
 	}

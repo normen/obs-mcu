@@ -112,6 +112,14 @@ func (m *McuState) SetSelectState(fader byte, state bool) {
 	}
 }
 
+func (m *McuState) SetAssignMode(number byte) {
+	for i := 0; i < 6; i++ {
+		lit := (byte(i) == number)
+		num := byte(gomcu.AssignTrack) + byte(i)
+		m.SendLed(num, lit)
+	}
+}
+
 func (m *McuState) SetTrackEnabledState(track byte, state bool) {
 	num := byte(gomcu.Read) + track
 	m.SendLed(num, state)
@@ -202,6 +210,17 @@ func (m *McuState) SetMeter(fader byte, value float64) {
 	if m.MeterLevels[fader] != outByte {
 		m.MeterLevels[fader] = outByte
 		x := []midi.Message{gomcu.SetMeter(gomcu.Channel(fader), gomcu.MeterLevel(outByte))}
+		sendMidi(x)
+		if m.Debug {
+			log.Print(x)
+		}
+	}
+}
+
+func (m *McuState) SetVPotLed(fader byte, value byte) {
+	if m.VPotLedStates[fader] != value {
+		m.VPotLedStates[fader] = value
+		x := []midi.Message{gomcu.SetVPot(gomcu.Channel(fader), gomcu.VPotMode0, gomcu.VPotLED(value))}
 		sendMidi(x)
 		if m.Debug {
 			log.Print(x)

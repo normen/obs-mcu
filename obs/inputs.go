@@ -12,6 +12,15 @@ import (
 	"github.com/normen/obs-mcu/msg"
 )
 
+const (
+	ModeDelay byte = iota
+	Mode_2
+	ModePan
+	Mode_4
+	Mode_5
+	Mode_6
+)
+
 type Channel struct {
 	Name        string
 	Visible     bool
@@ -33,6 +42,7 @@ func NewChannel(name string) *Channel {
 type ChannelList struct {
 	inputs          map[string]*Channel
 	FirstChannel    int
+	AssignMode      byte
 	SelectedChannel string
 	syncRetry       *time.Timer
 }
@@ -150,8 +160,29 @@ func (l *ChannelList) SetPan(name string, pan float64) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Pan != pan {
 			channel.Pan = pan
+			if l.AssignMode == ModePan {
+				num := l.GetVisibleNumber(name)
+				if num != -1 {
+					fromObs <- msg.ChannelTextMessage{
+						FaderNumber: byte(num),
+						Lower:       true,
+						Text:        fmt.Sprintf("%.2f", pan-0.5),
+					}
+					fromObs <- msg.VPotLedMessage{
+						FaderNumber: byte(num),
+						LedState:    byte(pan*11.0 + 1),
+					}
+				}
+			}
 		}
 	}
+}
+
+func (l *ChannelList) GetPan(name string) float64 {
+	if channel, ok := l.inputs[name]; ok {
+		return channel.Pan
+	}
+	return 0
 }
 
 func (l *ChannelList) SetSelected(fader byte, selected bool) {
@@ -193,12 +224,18 @@ func (l *ChannelList) SetDelayMS(name string, delay float64) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.DelayMS != delay {
 			channel.DelayMS = delay
-			num := l.GetVisibleNumber(name)
-			if num != -1 {
-				fromObs <- msg.ChannelTextMessage{
-					FaderNumber: byte(num),
-					Lower:       true,
-					Text:        fmt.Sprintf("%.0fms", delay),
+			if l.AssignMode == ModeDelay {
+				num := l.GetVisibleNumber(name)
+				if num != -1 {
+					fromObs <- msg.ChannelTextMessage{
+						FaderNumber: byte(num),
+						Lower:       true,
+						Text:        fmt.Sprintf("%.0fms", delay),
+					}
+					fromObs <- msg.VPotLedMessage{
+						FaderNumber: byte(num),
+						LedState:    0x00,
+					}
 				}
 			}
 		}
@@ -264,6 +301,18 @@ func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
 	}
 }
 
+func (l *ChannelList) SetAssignMode(mode byte) {
+	if mode == ModeDelay || mode == ModePan {
+		if l.AssignMode != mode {
+			l.AssignMode = mode
+			fromObs <- msg.AssignMessage{
+				Mode: mode,
+			}
+			l.sync()
+		}
+	}
+}
+
 func (l *ChannelList) Clear() {
 	l.inputs = make(map[string]*Channel)
 	l.sync()
@@ -303,10 +352,27 @@ func (l *ChannelList) SyncMcu() {
 			FaderNumber: byte(i),
 			Text:        input.Name,
 		}
-		fromObs <- msg.ChannelTextMessage{
-			FaderNumber: byte(i),
-			Lower:       true,
-			Text:        fmt.Sprintf("%.0fms", input.DelayMS),
+		switch l.AssignMode {
+		case ModeDelay:
+			fromObs <- msg.ChannelTextMessage{
+				FaderNumber: byte(i),
+				Lower:       true,
+				Text:        fmt.Sprintf("%.0fms", input.DelayMS),
+			}
+			fromObs <- msg.VPotLedMessage{
+				FaderNumber: byte(i),
+				LedState:    0x00,
+			}
+		case ModePan:
+			fromObs <- msg.ChannelTextMessage{
+				FaderNumber: byte(i),
+				Lower:       true,
+				Text:        fmt.Sprintf("%.2f", input.Pan-0.5),
+			}
+			fromObs <- msg.VPotLedMessage{
+				FaderNumber: byte(i),
+				LedState:    byte(input.Pan*11.0 + 1),
+			}
 		}
 		maxidx = i + 1
 	}
@@ -332,11 +398,19 @@ func (l *ChannelList) SyncMcu() {
 			Lower:       true,
 			Text:        "",
 		}
+		fromObs <- msg.VPotLedMessage{
+			FaderNumber: byte(i),
+			LedState:    0x00,
+		}
 	}
 	// assign display
 	asgn := []rune{'0' + rune((l.FirstChannel+1)/10%10), '0' + rune((l.FirstChannel+1)%10)}
 	fromObs <- msg.AssignLEDMessage{
 		Characters: asgn,
+	}
+	// assign buttons
+	fromObs <- msg.AssignMessage{
+		Mode: l.AssignMode,
 	}
 	// select button
 	selectNo := l.GetVisibleNumber(l.SelectedChannel)

@@ -41,6 +41,10 @@ type SelectMessage struct {
 	Value       bool
 }
 
+type AssignMessage struct {
+	Mode byte
+}
+
 type TrackEnableMessage struct {
 	TrackNumber byte
 	Value       bool
@@ -90,6 +94,15 @@ type BankMessage struct {
 type VPotChangeMessage struct {
 	FaderNumber  byte
 	ChangeAmount int
+}
+
+type VPotButtonMessage struct {
+	FaderNumber byte
+}
+
+type VPotLedMessage struct {
+	FaderNumber byte
+	LedState    byte
 }
 
 type AssignLEDMessage struct {

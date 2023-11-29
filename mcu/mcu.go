@@ -220,6 +220,10 @@ func receiveMidi(message midi.Message, timestamps int32) {
 			fromMcu <- msg.BankMessage{
 				ChangeAmount: amount,
 			}
+		} else if gomcu.Switch(k) >= gomcu.V1 && gomcu.Switch(k) <= gomcu.V8 {
+			fromMcu <- msg.VPotButtonMessage{
+				FaderNumber: k - byte(gomcu.V1),
+			}
 		} else if gomcu.Switch(k) >= gomcu.Mute1 && gomcu.Switch(k) <= gomcu.Mute8 {
 			fromMcu <- msg.MuteMessage{
 				FaderNumber: k - byte(gomcu.Mute1),
@@ -241,6 +245,10 @@ func receiveMidi(message midi.Message, timestamps int32) {
 		} else if gomcu.Switch(k) >= gomcu.Read && gomcu.Switch(k) <= gomcu.Group {
 			fromMcu <- msg.TrackEnableMessage{
 				TrackNumber: k - byte(gomcu.Read),
+			}
+		} else if gomcu.Switch(k) >= gomcu.AssignTrack && gomcu.Switch(k) <= gomcu.AssignInstrument {
+			fromMcu <- msg.AssignMessage{
+				Mode: k - byte(gomcu.AssignTrack),
 			}
 		} else if len(gomcu.Names) > int(k) {
 			configValue := getCommand(k)
@@ -333,6 +341,10 @@ func runLoop() {
 				state.SetMonitorState(e.FaderNumber, e.MonitorType)
 			case msg.SelectMessage:
 				state.SetSelectState(e.FaderNumber, e.Value)
+			case msg.AssignMessage:
+				state.SetAssignMode(e.Mode)
+			case msg.VPotLedMessage:
+				state.SetVPotLed(e.FaderNumber, e.LedState)
 			case msg.MeterMessage:
 				state.SetMeter(e.FaderNumber, e.Value)
 			case msg.LedMessage:
