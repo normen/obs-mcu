@@ -152,7 +152,7 @@ func disconnect() {
 
 // retry connection after 3 seconds
 func retryConnect() {
-	log.Print("Retry connection..")
+	log.Print("Retry MIDI connection..")
 	disconnect()
 	if connectRetry != nil {
 		connectRetry.Stop()

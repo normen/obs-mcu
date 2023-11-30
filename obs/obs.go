@@ -108,7 +108,7 @@ func connect() error {
 
 // Tries to reconnect to OBS, called by the runloop
 func retryConnect() {
-	log.Print("Retry connection..")
+	log.Print("Retry OBS connection..")
 	if connectRetry != nil {
 		connectRetry.Stop()
 	}
