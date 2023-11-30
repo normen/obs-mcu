@@ -27,7 +27,7 @@ var ShowHotkeyNames bool
 var client *goobs.Client
 var interrupt chan os.Signal
 var connection chan int
-var sync chan int
+var sync chan func()
 var connected bool
 
 var connectRetry *time.Timer
@@ -45,13 +45,14 @@ func InitObs(in chan interface{}, out chan interface{}) {
 	states = NewObsStates()
 	interrupt = make(chan os.Signal, 1)
 	connection = make(chan int, 1)
-	sync = make(chan int, 1)
+	sync = make(chan func(), 1)
 	signal.Notify(interrupt, os.Interrupt)
 	go runLoop()
 	// start connection by sending connection state "0"
 	connection <- 0
 }
 
+// Tries to connect to OBS, called by the runloop
 func connect() error {
 	if client != nil {
 		client.Disconnect()
@@ -335,8 +336,8 @@ func runLoop() {
 			disconnect()
 			log.Print("Ending OBS runloop")
 			return
-		case <-sync:
-			channels.SyncMcu()
+		case function := <-sync:
+			function()
 		case state := <-connection:
 			switch state {
 			case 0:
