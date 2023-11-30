@@ -21,6 +21,7 @@ const (
 	Mode_6
 )
 
+// one source in obs that can be controlled if visible
 type Channel struct {
 	Name        string
 	Visible     bool
@@ -32,6 +33,7 @@ type Channel struct {
 	Tracks      map[string]bool
 }
 
+// create a new channel
 func NewChannel(name string) *Channel {
 	return &Channel{
 		Name:   name,
@@ -39,6 +41,10 @@ func NewChannel(name string) *Channel {
 	}
 }
 
+// Master list of all channels, has functions to set their
+// state when obs sends new values.
+// It syncs the state with the mcu runloop based on the channel visibility etc.
+// The mcu runloop is responsible for deduping the MIDI messages.
 type ChannelList struct {
 	inputs          map[string]*Channel
 	FirstChannel    int
@@ -47,12 +53,14 @@ type ChannelList struct {
 	syncRetry       *time.Timer
 }
 
+// create a new channel list
 func NewChannelList() *ChannelList {
 	return &ChannelList{
 		inputs: make(map[string]*Channel),
 	}
 }
 
+// change the first channel shown on the mcu
 func (l *ChannelList) ChangeFaderBank(amount int) {
 	l.FirstChannel = l.FirstChannel + amount
 	if l.FirstChannel < 0 {
@@ -86,6 +94,7 @@ func (l *ChannelList) GetVisible() []Channel {
 	}
 }
 
+// get the name of a visible channel by its index on the mcu
 func (l *ChannelList) GetVisibleName(index byte) string {
 	visible := l.GetVisible()
 	myIndex := int(index)
@@ -95,6 +104,8 @@ func (l *ChannelList) GetVisibleName(index byte) string {
 	return ""
 }
 
+// get the index of a visible channel by its name
+// returns -1 if not found
 func (l *ChannelList) GetVisibleNumber(name string) int {
 	visible := l.GetVisible()
 	for idx, ch := range visible {
@@ -109,6 +120,7 @@ func (l *ChannelList) GetVisibleNumber(name string) int {
 	return -1
 }
 
+// add a channel to the list (doesn't check if it has audio)
 func (l *ChannelList) AddChannel(name string) {
 	if _, ok := l.inputs[name]; !ok {
 		c := NewChannel(name)
@@ -117,6 +129,7 @@ func (l *ChannelList) AddChannel(name string) {
 	}
 }
 
+// remove a channel from the list
 func (l *ChannelList) RemoveChannel(name string) {
 	if _, ok := l.inputs[name]; ok {
 		delete(l.inputs, name)
@@ -124,6 +137,7 @@ func (l *ChannelList) RemoveChannel(name string) {
 	}
 }
 
+// set the visibility of a channel (if its shown in obs and on the mcu)
 func (l *ChannelList) SetVisible(name string, visible bool) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Visible != visible {
@@ -133,6 +147,7 @@ func (l *ChannelList) SetVisible(name string, visible bool) {
 	}
 }
 
+// set the mute state of a channel
 func (l *ChannelList) SetMuted(name string, muted bool) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Muted != muted {
@@ -148,6 +163,7 @@ func (l *ChannelList) SetMuted(name string, muted bool) {
 	}
 }
 
+// set the pan state of a channel
 func (l *ChannelList) SetPan(name string, pan float64) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Pan != pan {
@@ -170,6 +186,7 @@ func (l *ChannelList) SetPan(name string, pan float64) {
 	}
 }
 
+// get the pan state of a channel
 func (l *ChannelList) GetPan(name string) float64 {
 	if channel, ok := l.inputs[name]; ok {
 		return channel.Pan
@@ -177,6 +194,7 @@ func (l *ChannelList) GetPan(name string) float64 {
 	return 0
 }
 
+// set the selected channel # on the mcu
 func (l *ChannelList) SetSelected(fader byte, selected bool) {
 	name := l.GetVisibleName(fader)
 	if name != "" {
@@ -189,6 +207,8 @@ func (l *ChannelList) SetSelected(fader byte, selected bool) {
 	}
 }
 
+// set the monitor type of a channel (rec and solo button)
+// type can be "OBS_MONITORING_TYPE_NONE", "OBS_MONITORING_TYPE_MONITOR_ONLY", "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT"
 func (l *ChannelList) SetMonitorType(name string, mon string) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.MonitorType != mon {
@@ -204,6 +224,7 @@ func (l *ChannelList) SetMonitorType(name string, mon string) {
 	}
 }
 
+// get the monitor type of a channel
 func (l *ChannelList) GetMonitorType(name string) string {
 	if channel, ok := l.inputs[name]; ok {
 		return channel.MonitorType
@@ -211,6 +232,7 @@ func (l *ChannelList) GetMonitorType(name string) string {
 	return ""
 }
 
+// set the delay of a channel
 func (l *ChannelList) SetDelayMS(name string, delay float64) {
 	//delay = delay
 	if channel, ok := l.inputs[name]; ok {
@@ -234,6 +256,7 @@ func (l *ChannelList) SetDelayMS(name string, delay float64) {
 	}
 }
 
+// get the delay of a channel
 func (l *ChannelList) GetDelayMS(name string) float64 {
 	if channel, ok := l.inputs[name]; ok {
 		return channel.DelayMS
@@ -241,6 +264,7 @@ func (l *ChannelList) GetDelayMS(name string) float64 {
 	return 0.0
 }
 
+// set the volume of a channel
 func (l *ChannelList) SetVolume(name string, volume float64) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Volume != volume {
@@ -256,6 +280,7 @@ func (l *ChannelList) SetVolume(name string, volume float64) {
 	}
 }
 
+// set the enabled state of a track of the selected channel
 func (l *ChannelList) SetTrack(idx byte, state bool) *Channel {
 	if channel, ok := l.inputs[l.SelectedChannel]; ok {
 		strIdx := fmt.Sprintf("%v", idx+1)
@@ -273,6 +298,7 @@ func (l *ChannelList) SetTrack(idx byte, state bool) *Channel {
 	return nil
 }
 
+// set the enabled state of all tracks of the channel with the given name
 func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
 	if channel, ok := l.inputs[name]; ok {
 		channel.Tracks = tracksEnabled
@@ -293,6 +319,7 @@ func (l *ChannelList) SetTracks(name string, tracksEnabled map[string]bool) {
 	}
 }
 
+// set the assign mode of the mcu (delay or pan on the vpots)
 func (l *ChannelList) SetAssignMode(mode byte) {
 	if mode == ModeDelay || mode == ModePan {
 		if l.AssignMode != mode {
@@ -305,17 +332,21 @@ func (l *ChannelList) SetAssignMode(mode byte) {
 	}
 }
 
+// clear the channel list
 func (l *ChannelList) Clear() {
 	l.inputs = make(map[string]*Channel)
 	l.sync()
 }
 
+// set all channels to invisible (unused)
 func (l *ChannelList) SetAllInvisible() {
 	for _, channel := range l.inputs {
 		channel.Visible = false
 	}
 }
 
+// sync the state with the mcu runloop,
+// called with a timeout to prevent spamming the mcu
 func (l *ChannelList) sync() {
 	if l.syncRetry != nil {
 		l.syncRetry.Stop()
@@ -325,6 +356,7 @@ func (l *ChannelList) sync() {
 	l.syncRetry = time.AfterFunc(100*time.Millisecond, func() { sync <- l.SyncMcu })
 }
 
+// actual sync with mcu, called from main runloop (sync channel)
 func (l *ChannelList) SyncMcu() {
 	var maxidx int = 0
 	for i, input := range l.GetVisible() {
@@ -443,6 +475,7 @@ func (l *ChannelList) SyncMcu() {
 	states.SendAll()
 }
 
+// get all visible channels from obs and set their state locally
 // TODO: other way to get active ones initially?
 func (l *ChannelList) UpdateVisible() {
 	resp, err := client.Scenes.GetCurrentProgramScene()
@@ -476,6 +509,7 @@ func (l *ChannelList) UpdateVisible() {
 }
 
 // adds an input and gets the basic info (mute state, volume etc)
+// only adds if it has audio tracks
 func (l *ChannelList) AddInput(inputName string) {
 	if len(inputName) == 0 {
 		return
@@ -490,6 +524,8 @@ func (l *ChannelList) AddInput(inputName string) {
 }
 
 // TODO: check for changes
+// reads the special inputs from obs on start
+// newly added inputs are detected by the event handler
 func (l *ChannelList) UpdateSpecialInputs() error {
 	resp, err := client.Inputs.GetSpecialInputs()
 	if err == nil {
@@ -505,11 +541,13 @@ func (l *ChannelList) UpdateSpecialInputs() error {
 	return nil
 }
 
+// adds a special input and immediately sets it visible (always visible)
 func (l *ChannelList) addSpecialInput(inputName string) {
 	l.AddInput(inputName)
 	l.SetVisible(inputName, true)
 }
 
+// get the basic info of an input (volume, mute etc)
 func (l *ChannelList) getBaseInfos(inputName string) {
 	volume, err := client.Inputs.GetInputVolume(&inputs.GetInputVolumeParams{InputName: inputName})
 	if err == nil {
