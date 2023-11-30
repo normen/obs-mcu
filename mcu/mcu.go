@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/normen/obs-mcu/config"
@@ -16,6 +17,7 @@ import (
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
+var waitGroup *sync.WaitGroup
 var state *McuState
 
 var midiInput drivers.In
@@ -51,9 +53,10 @@ func GetMidiInputs() []string {
 }
 
 // Initialize the MCU runloop
-func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
+func InitMcu(fMcu chan interface{}, fObs chan interface{}, wg *sync.WaitGroup) {
 	fromMcu = fMcu
 	fromObs = fObs
+	waitGroup = wg
 	InitInterp()
 	internalMcu = make(chan interface{})
 	interrupt = make(chan os.Signal, 1)
@@ -61,6 +64,7 @@ func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	signal.Notify(interrupt, os.Interrupt)
 	state = NewMcuState()
 	connection <- 0
+	wg.Add(1)
 	go runLoop()
 }
 
@@ -328,7 +332,8 @@ func runLoop() {
 			}
 		case <-interrupt:
 			log.Print("Ending MCU runloop")
-			//disconnect()
+			disconnect()
+			waitGroup.Done()
 			return
 		case message := <-fromObs:
 			if !checkMidiConnection() {

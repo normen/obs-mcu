@@ -353,7 +353,7 @@ func (l *ChannelList) sync() {
 		l.syncRetry = nil
 	}
 	// TODO: spaghetti (sync)
-	l.syncRetry = time.AfterFunc(100*time.Millisecond, func() { sync <- l.SyncMcu })
+	l.syncRetry = time.AfterFunc(100*time.Millisecond, func() { synch <- l.SyncMcu })
 }
 
 // actual sync with mcu, called from main runloop (sync channel)

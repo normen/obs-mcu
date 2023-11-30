@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/normen/obs-mcu/config"
 	"github.com/normen/obs-mcu/mcu"
@@ -21,7 +21,7 @@ import (
 )
 
 var VERSION string = "v0.5.0"
-var interrupt chan os.Signal
+var waitGroup sync.WaitGroup
 
 // TODO: config file command line option
 func main() {
@@ -56,13 +56,11 @@ func main() {
 }
 
 func startRunloops() {
-	interrupt = make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
 	fromMcu := make(chan interface{}, 100)
 	fromObs := make(chan interface{}, 100)
-	obs.InitObs(fromMcu, fromObs)
-	mcu.InitMcu(fromMcu, fromObs)
-	<-interrupt
+	obs.InitObs(fromMcu, fromObs, &waitGroup)
+	mcu.InitMcu(fromMcu, fromObs, &waitGroup)
+	waitGroup.Wait()
 }
 
 func ShowMidiPorts() {

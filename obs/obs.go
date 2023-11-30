@@ -5,6 +5,8 @@ import (
 	"math"
 	"os"
 	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/andreykaipov/goobs"
@@ -21,13 +23,14 @@ import (
 	"github.com/normen/obs-mcu/msg"
 )
 
+var waitGroup *sync.WaitGroup
 var ExitWithObs bool
 var ShowHotkeyNames bool
 
 var client *goobs.Client
 var interrupt chan os.Signal
 var connection chan int
-var sync chan func()
+var synch chan func()
 var connected bool
 
 var connectRetry *time.Timer
@@ -38,15 +41,17 @@ var fromObs chan interface{}
 var clientInputChannel chan interface{}
 
 // Starts the runloop that manages the connection to OBS
-func InitObs(in chan interface{}, out chan interface{}) {
+func InitObs(in chan interface{}, out chan interface{}, wg *sync.WaitGroup) {
 	fromMcu = in
 	fromObs = out
+	waitGroup = wg
 	channels = NewChannelList()
 	states = NewObsStates()
 	interrupt = make(chan os.Signal, 1)
 	connection = make(chan int, 1)
-	sync = make(chan func(), 1)
+	synch = make(chan func(), 1)
 	signal.Notify(interrupt, os.Interrupt)
+	wg.Add(1)
 	go runLoop()
 	// start connection by sending connection state "0"
 	connection <- 0
@@ -294,7 +299,7 @@ func processObsMessage(event interface{}) {
 		// -> other ways to see if connection dropped?
 		channels.Clear()
 		if ExitWithObs {
-			os.Exit(0)
+			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 		}
 		retryConnect()
 		log.Print("Bye")
@@ -335,8 +340,9 @@ func runLoop() {
 		case <-interrupt:
 			disconnect()
 			log.Print("Ending OBS runloop")
+			waitGroup.Done()
 			return
-		case function := <-sync:
+		case function := <-synch:
 			function()
 		case state := <-connection:
 			switch state {
