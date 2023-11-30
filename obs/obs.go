@@ -292,17 +292,16 @@ func processObsMessage(event interface{}) {
 	case *events.InputAudioSyncOffsetChanged:
 		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)
 	case *events.ExitStarted:
-		log.Print("Gracefully shutting down")
-		//disconnect()
-		connected = false
-		//TODO: this is the only way we reconnect
-		// -> other ways to see if connection dropped?
+		log.Print("OBS is shutting down")
+		// TODO: this is the only way we reconnect
+		// other ways to see if connection dropped?
 		channels.Clear()
 		if ExitWithObs {
+			log.Print("Bye")
 			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		} else {
+			retryConnect()
 		}
-		retryConnect()
-		log.Print("Bye")
 	case *events.InputVolumeMeters:
 		for _, v := range e.Inputs {
 			num := channels.GetVisibleNumber(v.InputName)
