@@ -133,14 +133,6 @@ func (l *ChannelList) SetVisible(name string, visible bool) {
 	}
 }
 
-func (l *ChannelList) setVisible(name string, visible bool) {
-	if channel, ok := l.inputs[name]; ok {
-		if channel.Visible != visible {
-			channel.Visible = visible
-		}
-	}
-}
-
 func (l *ChannelList) SetMuted(name string, muted bool) {
 	if channel, ok := l.inputs[name]; ok {
 		if channel.Muted != muted {
@@ -459,14 +451,14 @@ func (l *ChannelList) UpdateVisible() {
 		if err == nil {
 			for _, item := range list.SceneItems {
 				if item.SceneItemEnabled {
-					l.setVisible(item.SourceName, true)
+					l.SetVisible(item.SourceName, true)
 				}
 				if item.SourceType == "OBS_SOURCE_TYPE_SCENE" {
 					sublist, err := client.SceneItems.GetGroupSceneItemList(&sceneitems.GetGroupSceneItemListParams{SceneName: item.SourceName})
 					if err == nil {
 						for _, subItem := range sublist.SceneItems {
 							if subItem.SceneItemEnabled {
-								l.setVisible(subItem.SourceName, true)
+								l.SetVisible(subItem.SourceName, true)
 							}
 						}
 					} else {
@@ -497,18 +489,6 @@ func (l *ChannelList) AddInput(inputName string) {
 	}
 }
 
-func (l *ChannelList) addInput(inputName string) {
-	if len(inputName) == 0 {
-		return
-	}
-	if _, ok := l.inputs[inputName]; !ok {
-		tracks, _ := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
-		if tracks.InputAudioTracks != nil {
-			l.AddChannel(inputName)
-		}
-	}
-}
-
 // TODO: check for changes
 func (l *ChannelList) UpdateSpecialInputs() error {
 	resp, err := client.Inputs.GetSpecialInputs()
@@ -526,8 +506,8 @@ func (l *ChannelList) UpdateSpecialInputs() error {
 }
 
 func (l *ChannelList) addSpecialInput(inputName string) {
-	l.addInput(inputName)
-	l.setVisible(inputName, true)
+	l.AddInput(inputName)
+	l.SetVisible(inputName, true)
 }
 
 func (l *ChannelList) getBaseInfos(inputName string) {
