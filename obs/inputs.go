@@ -455,15 +455,15 @@ func (l *ChannelList) SyncMcu() {
 func (l *ChannelList) UpdateVisible() {
 	resp, err := client.Scenes.GetCurrentProgramScene()
 	if err == nil {
-		list, err2 := client.SceneItems.GetSceneItemList(&sceneitems.GetSceneItemListParams{SceneName: resp.CurrentProgramSceneName})
-		if err2 == nil {
+		list, err := client.SceneItems.GetSceneItemList(&sceneitems.GetSceneItemListParams{SceneName: resp.CurrentProgramSceneName})
+		if err == nil {
 			for _, item := range list.SceneItems {
 				if item.SceneItemEnabled {
 					l.setVisible(item.SourceName, true)
 				}
 				if item.SourceType == "OBS_SOURCE_TYPE_SCENE" {
-					sublist, err3 := client.SceneItems.GetGroupSceneItemList(&sceneitems.GetGroupSceneItemListParams{SceneName: item.SourceName})
-					if err3 == nil {
+					sublist, err := client.SceneItems.GetGroupSceneItemList(&sceneitems.GetGroupSceneItemListParams{SceneName: item.SourceName})
+					if err == nil {
 						for _, subItem := range sublist.SceneItems {
 							if subItem.SceneItemEnabled {
 								l.setVisible(subItem.SourceName, true)
