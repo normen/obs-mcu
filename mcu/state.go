@@ -10,6 +10,8 @@ import (
 	"gitlab.com/gomidi/midi/v2"
 )
 
+// McuState stores the current state of the MCU
+// and syncs it with the hardware
 type McuState struct {
 	// TODO: combine
 	FaderLevels         []int16
@@ -25,6 +27,7 @@ type McuState struct {
 	Debug               bool
 }
 
+// NewMcuState creates a new McuState
 func NewMcuState() *McuState {
 	state := McuState{}
 	state.Text = "                                                                                                                "
@@ -40,6 +43,8 @@ func NewMcuState() *McuState {
 	return &state
 }
 
+// UpdateTouch checks if a simulated fader touch has timed out
+// and sends the buffered value
 func (m *McuState) UpdateTouch() {
 	for i, level := range m.FaderLevelsBuffered {
 		if m.FaderTouch[i] {
@@ -55,6 +60,8 @@ func (m *McuState) UpdateTouch() {
 	}
 }
 
+// SetFaderTouched sets the fader touch state and sends the buffered value
+// if the touch has ended
 func (m *McuState) SetFaderTouched(fader byte, touched bool) {
 	state.FaderTouch[fader] = touched
 	if !touched {
@@ -64,6 +71,8 @@ func (m *McuState) SetFaderTouched(fader byte, touched bool) {
 	}
 }
 
+// SetFaderLevel sets the fader level and sends the value to the hardware
+// fader if it has changed
 func (m *McuState) SetFaderLevel(fader byte, level float64) {
 	m.FaderLevelsBuffered[fader] = level
 	newLevel := FaderFloatToInt(level)
@@ -80,6 +89,7 @@ func (m *McuState) SetFaderLevel(fader byte, level float64) {
 	}
 }
 
+// SetMonitorState sets the monitor state for a fader (rec+solo button)
 func (m *McuState) SetMonitorState(fader byte, state string) {
 	// OBS_MONITORING_TYPE_NONE
 	// OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT
@@ -99,11 +109,14 @@ func (m *McuState) SetMonitorState(fader byte, state string) {
 	}
 }
 
+// SetMuteState sets the mute state for a fader
 func (m *McuState) SetMuteState(fader byte, state bool) {
 	num := byte(gomcu.Mute1) + fader
 	m.SendLed(num, state)
 }
 
+// SetSelectState sets the selected fader and lights up
+// the select buttons accordingly
 func (m *McuState) SetSelectState(fader byte, state bool) {
 	for i := 0; i < 8; i++ {
 		lit := (byte(i) == fader) && state
@@ -112,6 +125,8 @@ func (m *McuState) SetSelectState(fader byte, state bool) {
 	}
 }
 
+// SetAssignMode sets the assign mode and lights up
+// the assign buttons accordingly
 func (m *McuState) SetAssignMode(number byte) {
 	for i := 0; i < 6; i++ {
 		lit := (byte(i) == number)
@@ -120,11 +135,14 @@ func (m *McuState) SetAssignMode(number byte) {
 	}
 }
 
+// SetTrackEnabledState sets the enabled state for a single track
 func (m *McuState) SetTrackEnabledState(track byte, state bool) {
 	num := byte(gomcu.Read) + track
 	m.SendLed(num, state)
 }
 
+// SendLed checks if the led state has changed and sends the
+// message to the hardware if it has changed
 func (m *McuState) SendLed(num byte, state bool) {
 	if m.LedStates[num] != state {
 		m.LedStates[num] = state
@@ -142,6 +160,7 @@ func (m *McuState) SendLed(num byte, state bool) {
 	}
 }
 
+// SetAssignText sets the two letters above the assign buttons
 func (m *McuState) SetAssignText(text []rune) {
 	if m.Assign[0] != text[0] || m.Assign[1] != text[1] {
 		x := []midi.Message{gomcu.SetDigit(gomcu.AssignLeft, gomcu.Char(text[0])), gomcu.SetDigit(gomcu.AssignRight, gomcu.Char(text[1]))}
@@ -153,6 +172,7 @@ func (m *McuState) SetAssignText(text []rune) {
 	}
 }
 
+// SetDisplayText sets the text on the display (LED)
 func (m *McuState) SetDisplayText(text string) {
 	if len(text) > 10 {
 		text = text[:10]
@@ -170,6 +190,8 @@ func (m *McuState) SetDisplayText(text string) {
 	}
 }
 
+// SetChannelText sets the text above the fader channel strip (LCD)
+// the text is automatically shortened to 6 characters
 func (m *McuState) SetChannelText(fader byte, text string, lower bool) {
 	idx := int(fader * 7)
 	if lower {
@@ -186,6 +208,7 @@ func (m *McuState) SetChannelText(fader byte, text string, lower bool) {
 	}
 }
 
+// SetMeter sets the meter level for a fader, it is sent directly
 func (m *McuState) SetMeter(fader byte, value float64) {
 	var outByte byte
 	if value > -6 {
@@ -217,6 +240,8 @@ func (m *McuState) SetMeter(fader byte, value float64) {
 	}
 }
 
+// SetVPotLed sets the LED state for a VPot
+// value 0 is off, values 1-12 are full left
 func (m *McuState) SetVPotLed(fader byte, value byte) {
 	if m.VPotLedStates[fader] != value {
 		m.VPotLedStates[fader] = value
