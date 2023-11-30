@@ -22,7 +22,7 @@ The fact that it runs as a standalone app even on a Raspberry Pi allows you to c
 
 The `Faders` and the `Mute` buttons work as you'd expect, they basically mirror the audio mixer in OBS.
 
-The `VPots` allow you to change the audio sync offset for the audio channel in 10ms increments, the LCD shows the current offset.
+The `VPots` allow you to change the audio sync offset for the audio channel in 10ms increments, the LCD shows the current offset. Pressing the `Pan` button in the assign section switches the VPots to control the balance of the audio channel. Pressing the VPot button resets the offset or balance to 0.
 
 The `Solo` buttons set the monitor mode for the channel to "monitor and output".
 
@@ -117,10 +117,10 @@ play = STATE:StreamState
 
 You can run obs-mcu automatically every time that OBS starts by using the OBS plugin [Advanced Scene Switcher](https://github.com/WarmUpTill/SceneSwitcher) in combination with the `-x` command line option. _Make sure you configure obs-mcu before you do this because you won't see the obs-mcu window when starting like this._
 
-1. - Install Advanced Scene Switcher
-2. - Add a macro to run obs-mcu when OBS starts as described [here](https://github.com/WarmUpTill/SceneSwitcher/wiki/Start-other-programs-when-starting-OBS).
-3. - For "Run" enter the location of `obs-mcu.exe`
-4. - Press the "+" under "Arguments" and add the argument `-x`
+1. Install Advanced Scene Switcher
+2. Add a macro to run obs-mcu when OBS starts as described [here](https://github.com/WarmUpTill/SceneSwitcher/wiki/Start-other-programs-when-starting-OBS).
+3. For "Run" enter the location of `obs-mcu.exe`
+4. Press the "+" under "Arguments" and add the argument `-x`
 
 Now obs-mcu will start whenever OBS starts and automatically connect to both OBS and your MCU. Note that when OBS crashes the app can't detect the shutdown and will stay opened. You will have to quit it using the Task Manager in that case.
 
@@ -132,22 +132,13 @@ Theres afaict no way to get the "hidden" state of audio channels, so they will a
 
 ### TODO / Future
 
-Heres a list of planned features I might get around to work on:
+Heres a list of planned features I might get around to work on but some of them depend on features that are not yet available in OBS-websockets.
 
 ##### Features
 
 - [ ] Allow loading different config files
-- [X] Select channels (for feature below)
-- [X] Allow selection of output tracks for selected channel
-- [x] Allow use of Vpots to control delay, show in display
-- [X] Allow assigning states in OBS to LEDs
 - [ ] Show meters
 - [ ] Video fade on master fader
-
-##### Internal
-
-- [x] Update to go-midi v2
-- [x] Better handling of MIDI disconnects
 
 ### Development
 
