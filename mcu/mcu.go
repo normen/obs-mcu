@@ -50,6 +50,7 @@ func GetMidiInputs() []string {
 	return names
 }
 
+// Initialize the MCU runloop
 func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	fromMcu = fMcu
 	fromObs = fObs
@@ -63,6 +64,7 @@ func InitMcu(fMcu chan interface{}, fObs chan interface{}) {
 	go runLoop()
 }
 
+// connects to the MCU, called from runloop
 func connect() {
 	var err error
 	disconnect()
@@ -121,6 +123,7 @@ func connect() {
 	log.Print("MIDI Connected")
 }
 
+// disconnects from the MCU, called from runloop
 func disconnect() {
 	//debug.PrintStack()
 	if midiStop != nil {
@@ -143,6 +146,7 @@ func disconnect() {
 	}
 }
 
+// retry connection after 3 seconds
 func retryConnect() {
 	log.Print("Retry connection..")
 	disconnect()
@@ -152,6 +156,8 @@ func retryConnect() {
 	connectRetry = time.AfterFunc(3*time.Second, func() { connection <- 0 })
 }
 
+// check if midi connection is still open,
+// call reconnect if not
 func checkMidiConnection() bool {
 	if midiInput != nil {
 		if !midiInput.IsOpen() {
@@ -164,6 +170,7 @@ func checkMidiConnection() bool {
 	return true
 }
 
+// get the command for a button from the config
 func getCommand(k uint8) string {
 	if len(gomcu.Names) > int(k) {
 		fieldName := gomcu.Names[k]
@@ -178,6 +185,7 @@ func getCommand(k uint8) string {
 	return ""
 }
 
+// send a list of midi messages
 func sendMidi(m []midi.Message) {
 	send, err := midi.SendTo(midiOutput)
 	if err != nil {
@@ -189,6 +197,7 @@ func sendMidi(m []midi.Message) {
 	}
 }
 
+// receives midi messages from the MCU, called from midi runloop!
 func receiveMidi(message midi.Message, timestamps int32) {
 	var c, k, v uint8
 	var val int16
@@ -297,6 +306,7 @@ func receiveMidi(message midi.Message, timestamps int32) {
 
 }
 
+// runloop for the MCU
 // only writes messages, reader is already looping
 func runLoop() {
 	// TODO: avoid ticker altogether when no touch

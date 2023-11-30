@@ -37,6 +37,7 @@ var fromMcu chan interface{}
 var fromObs chan interface{}
 var clientInputChannel chan interface{}
 
+// Starts the runloop that manages the connection to OBS
 func InitObs(in chan interface{}, out chan interface{}) {
 	fromMcu = in
 	fromObs = out
@@ -99,6 +100,7 @@ func connect() error {
 	return nil
 }
 
+// Tries to reconnect to OBS, called by the runloop
 func retryConnect() {
 	log.Print("Retry connection..")
 	if connectRetry != nil {
@@ -107,6 +109,7 @@ func retryConnect() {
 	connectRetry = time.AfterFunc(3*time.Second, func() { connection <- 0 })
 }
 
+// Shows the current inputs in the log (for debugging)
 func showInputs() {
 	inputs := channels.GetVisible()
 	for i, input := range inputs {
@@ -114,6 +117,7 @@ func showInputs() {
 	}
 }
 
+// Disconnects from OBS, called by the runloop
 func disconnect() {
 	connected = false
 	channels.Clear()
@@ -122,6 +126,8 @@ func disconnect() {
 	}
 }
 
+// Processes a message from the MCU,
+// called by the runloop when a message is received
 func processMcuMessage(message interface{}) {
 	if !connected {
 		return
@@ -248,6 +254,8 @@ func processMcuMessage(message interface{}) {
 	}
 }
 
+// Processes a message from OBS,
+// called by the runloop when a message is received
 func processObsMessage(event interface{}) {
 	switch e := event.(type) {
 	//TODO: special inputs changed
@@ -311,6 +319,7 @@ func processObsMessage(event interface{}) {
 	}
 }
 
+// Handles an error by logging it and retrying to connect
 func handle(err error) {
 	if err != nil {
 		log.Print(err)
@@ -318,6 +327,7 @@ func handle(err error) {
 	}
 }
 
+// The runloop that manages the connection to OBS
 func runLoop() {
 	for {
 		select {
