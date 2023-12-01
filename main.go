@@ -20,7 +20,7 @@ import (
 	"github.com/normen/obs-mcu/obs"
 )
 
-var VERSION string = "v0.5.1"
+var VERSION string = "v0.5.2"
 var waitGroup sync.WaitGroup
 
 // TODO: config file command line option

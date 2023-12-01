@@ -1,6 +1,7 @@
 package obs
 
 import (
+	"errors"
 	"log"
 	"math"
 	"os"
@@ -293,15 +294,6 @@ func processObsMessage(event interface{}) {
 		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)
 	case *events.ExitStarted:
 		log.Print("OBS is shutting down")
-		// TODO: this is the only way we reconnect
-		// other ways to see if connection dropped?
-		channels.Clear()
-		if ExitWithObs {
-			log.Print("Bye")
-			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-		} else {
-			retryConnect()
-		}
 	case *events.InputVolumeMeters:
 		for _, v := range e.Inputs {
 			num := channels.GetVisibleNumber(v.InputName)
@@ -312,15 +304,32 @@ func processObsMessage(event interface{}) {
 				}
 			}
 		}
-	case *websocket.CloseError:
-		log.Print("OBS exited")
 	case *events.StreamStateChanged:
 		states.SetState("StreamState", e.OutputActive)
 	case *events.RecordStateChanged:
 		states.SetState("RecordState", e.OutputActive)
+	case error:
+		uw := errors.Unwrap(e)
+		switch uw.(type) {
+		case *websocket.CloseError:
+			log.Print("OBS connection closed")
+			doExit()
+		default:
+			log.Print(uw)
+		}
 	default:
 		//log.Printf("Unhandled: %#v", e)
 		//log.Print(e)
+	}
+}
+
+func doExit() {
+	channels.Clear()
+	if ExitWithObs {
+		log.Print("Bye")
+		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	} else {
+		retryConnect()
 	}
 }
 
