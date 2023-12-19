@@ -304,11 +304,23 @@ func processObsMessage(event interface{}) {
 		for _, v := range e.Inputs {
 			num := channels.GetVisibleNumber(v.Name)
 			if num != -1 {
-				if len(v.Levels) > 0 && len(v.Levels[0]) > 0 {
-					dbVal := 20 * math.Log10(v.Levels[0][0])
-					fromObs <- msg.MeterMessage{
-						FaderNumber: byte(num),
-						Value:       dbVal,
+				chNum := len(v.Levels)
+				if chNum > 0 {
+					valNum := len(v.Levels[0])
+					if valNum > 0 {
+						level := 0.0
+						for i := 0; i < chNum; i++ {
+							// TODO: what is what here? Levels[0][2] seems to be peak,
+							// Levels[0][1] seems to be RMS?
+							level = level + v.Levels[i][valNum-1]
+							//log.Printf("%v ch[%d]: %f", v.Name, i, v.Levels[i][0])
+						}
+						level = level / float64(chNum)
+						dbVal := 20 * math.Log10(level)
+						fromObs <- msg.MeterMessage{
+							FaderNumber: byte(num),
+							Value:       dbVal,
+						}
 					}
 				}
 			}
