@@ -336,14 +336,12 @@ func doExit() {
 	channels.Clear()
 	if ExitWithObs {
 		log.Print("Bye")
-		//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 		p, err := os.FindProcess(os.Getpid())
 		if err != nil {
 			log.Print(err)
 		}
 		if runtime.GOOS == "windows" {
-			p.Signal(syscall.SIGTERM)
-
+			p.Kill()
 		} else {
 			p.Signal(syscall.SIGINT)
 		}
