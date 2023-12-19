@@ -129,7 +129,7 @@ You can run obs-mcu automatically every time that OBS starts by using the OBS pl
 3. For "Run" enter the location of `obs-mcu.exe`
 4. Press the "+" under "Arguments" and add the argument `-x`
 
-Now obs-mcu will start whenever OBS starts and automatically connect to both OBS and your MCU. Note that when OBS crashes the app can't detect the shutdown and will stay opened. You will have to quit it using the Task Manager in that case.
+Now obs-mcu will start whenever OBS starts and automatically connect to both OBS and your MCU. Note that when OBS crashes the app can't detect the shutdown and will stay opened. You will have to quit it using the System Tray in that case.
 
 #### Systray
 
