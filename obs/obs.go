@@ -41,6 +41,12 @@ var fromMcu chan interface{}
 var fromObs chan interface{}
 var clientInputChannel chan interface{}
 
+var (
+	OBS_MONITORING_TYPE_NONE               string = "OBS_MONITORING_TYPE_NONE"
+	OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT string = "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT"
+	OBS_MONITORING_TYPE_MONITOR_ONLY       string = "OBS_MONITORING_TYPE_MONITOR_ONLY"
+)
+
 // Starts the runloop that manages the connection to OBS
 func InitObs(in chan interface{}, out chan interface{}, wg *sync.WaitGroup) {
 	fromMcu = in
@@ -65,10 +71,16 @@ func connect() error {
 	}
 	var err error = nil
 	// TODO: this basically blocks - the mackie channel could overflow
-	client, err = goobs.New(config.Config.General.ObsHost,
-		goobs.WithPassword(config.Config.General.ObsPassword),
-		//goobs.WithEventSubscriptions(subscriptions.All|subscriptions.InputVolumeMeters|subscriptions.InputActiveStateChanged))
-		goobs.WithEventSubscriptions(subscriptions.All|subscriptions.InputActiveStateChanged))
+	if config.Config.ShowMeters {
+		client, err = goobs.New(config.Config.General.ObsHost,
+			goobs.WithPassword(config.Config.General.ObsPassword),
+			goobs.WithEventSubscriptions(subscriptions.All|subscriptions.InputVolumeMeters|subscriptions.InputActiveStateChanged))
+
+	} else {
+		client, err = goobs.New(config.Config.General.ObsHost,
+			goobs.WithPassword(config.Config.General.ObsPassword),
+			goobs.WithEventSubscriptions(subscriptions.All|subscriptions.InputActiveStateChanged))
+	}
 	if err != nil {
 		return err
 	}
@@ -144,18 +156,10 @@ func processMcuMessage(message interface{}) {
 		name := channels.GetVisibleName(e.FaderNumber)
 		if name != "" {
 			var err error
-			//TODO: workaround for bug in goobs, setting 0 via mul doesn't work
-			if e.FaderValue == 0 {
-				_, err = client.Inputs.SetInputVolume(&inputs.SetInputVolumeParams{
-					InputName:     name,
-					InputVolumeDb: -100,
-				})
-			} else {
-				_, err = client.Inputs.SetInputVolume(&inputs.SetInputVolumeParams{
-					InputName:      name,
-					InputVolumeMul: e.FaderValue,
-				})
-			}
+			_, err = client.Inputs.SetInputVolume(&inputs.SetInputVolumeParams{
+				InputName:      &name,
+				InputVolumeMul: &e.FaderValue,
+			})
 			if err != nil {
 				log.Print(err)
 				log.Printf("Fader Volume: %v", e.FaderValue)
@@ -169,17 +173,17 @@ func processMcuMessage(message interface{}) {
 			switch e.MonitorType {
 			// can't come from the MCU
 			//case "OBS_MONITORING_TYPE_NONE":
-			case "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT":
-				if mon == "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT" {
-					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: name, MonitorType: "OBS_MONITORING_TYPE_NONE"})
+			case OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT:
+				if mon == OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT {
+					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: &name, MonitorType: &OBS_MONITORING_TYPE_NONE})
 				} else {
-					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: name, MonitorType: "OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT"})
+					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: &name, MonitorType: &OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT})
 				}
-			case "OBS_MONITORING_TYPE_MONITOR_ONLY":
-				if mon == "OBS_MONITORING_TYPE_MONITOR_ONLY" {
-					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: name, MonitorType: "OBS_MONITORING_TYPE_NONE"})
+			case OBS_MONITORING_TYPE_MONITOR_ONLY:
+				if mon == OBS_MONITORING_TYPE_MONITOR_ONLY {
+					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: &name, MonitorType: &OBS_MONITORING_TYPE_NONE})
 				} else {
-					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: name, MonitorType: "OBS_MONITORING_TYPE_MONITOR_ONLY"})
+					_, err = client.Inputs.SetInputAudioMonitorType(&inputs.SetInputAudioMonitorTypeParams{InputName: &name, MonitorType: &OBS_MONITORING_TYPE_MONITOR_ONLY})
 				}
 			}
 			if err != nil {
@@ -189,13 +193,13 @@ func processMcuMessage(message interface{}) {
 	case msg.MuteMessage:
 		name := channels.GetVisibleName(e.FaderNumber)
 		if name != "" {
-			_, err := client.Inputs.ToggleInputMute(&inputs.ToggleInputMuteParams{InputName: name})
+			_, err := client.Inputs.ToggleInputMute(&inputs.ToggleInputMuteParams{InputName: &name})
 			if err != nil {
 				log.Print(err)
 			}
 		}
 	case msg.KeyMessage:
-		_, err := client.General.TriggerHotkeyByName(&general.TriggerHotkeyByNameParams{HotkeyName: e.HotkeyName})
+		_, err := client.General.TriggerHotkeyByName(&general.TriggerHotkeyByNameParams{HotkeyName: &e.HotkeyName})
 		if err != nil {
 			log.Print(err)
 		}
@@ -208,7 +212,7 @@ func processMcuMessage(message interface{}) {
 	case msg.TrackEnableMessage:
 		channel := channels.SetTrack(e.TrackNumber, e.Value)
 		if channel != nil {
-			_, err := client.Inputs.SetInputAudioTracks(&inputs.SetInputAudioTracksParams{InputName: channel.Name, InputAudioTracks: (*typedefs.InputAudioTracks)(&channel.Tracks)})
+			_, err := client.Inputs.SetInputAudioTracks(&inputs.SetInputAudioTracksParams{InputName: &channel.Name, InputAudioTracks: (*typedefs.InputAudioTracks)(&channel.Tracks)})
 			if err != nil {
 				log.Print(err)
 			}
@@ -217,15 +221,17 @@ func processMcuMessage(message interface{}) {
 		channels.SyncMcu()
 	case msg.VPotButtonMessage:
 		name := channels.GetVisibleName(e.FaderNumber)
+		balhalf := 0.5
+		minval := 0.0
 		if name != "" {
 			switch channels.AssignMode {
 			case ModePan:
-				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: name, InputAudioBalance: 0.5})
+				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: &name, InputAudioBalance: &balhalf})
 				if err != nil {
 					log.Print(err)
 				}
 			case ModeDelay:
-				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: 0.0000001})
+				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: &name, InputAudioSyncOffset: &minval})
 				if err != nil {
 					log.Print(err)
 				}
@@ -239,20 +245,16 @@ func processMcuMessage(message interface{}) {
 				newPan := channels.GetPan(name) + float64(e.ChangeAmount)/50.0
 				newPan = math.Min(newPan, 1.0)
 				newPan = math.Max(newPan, 0.0)
-				if newPan == 0.0 {
-					newPan = 0.0000001
-				}
-				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: name, InputAudioBalance: newPan})
+				_, err := client.Inputs.SetInputAudioBalance(&inputs.SetInputAudioBalanceParams{InputName: &name, InputAudioBalance: &newPan})
 				if err != nil {
 					log.Print(err)
 				}
 			case ModeDelay:
 				newDelay := channels.GetDelayMS(name) + float64(e.ChangeAmount*10)
 				if newDelay < 10 && newDelay > -10 {
-					//TODO: workaround for goobs not sending "0" delay
-					newDelay = 0.001
+					newDelay = 0
 				}
-				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: name, InputAudioSyncOffset: newDelay})
+				_, err := client.Inputs.SetInputAudioSyncOffset(&inputs.SetInputAudioSyncOffsetParams{InputName: &name, InputAudioSyncOffset: &newDelay})
 				if err != nil {
 					log.Print(err)
 				}
@@ -260,6 +262,8 @@ func processMcuMessage(message interface{}) {
 		}
 	}
 }
+
+var flip bool = false
 
 // Processes a message from OBS,
 // called by the runloop when a message is received
@@ -296,11 +300,14 @@ func processObsMessage(event interface{}) {
 		log.Print("OBS is shutting down")
 	case *events.InputVolumeMeters:
 		for _, v := range e.Inputs {
-			num := channels.GetVisibleNumber(v.InputName)
+			num := channels.GetVisibleNumber(v.Name)
 			if num != -1 {
-				//TODO: no value available!
-				fromObs <- msg.MeterMessage{
-					FaderNumber: byte(num),
+				if len(v.Levels) > 0 && len(v.Levels[0]) > 0 {
+					dbVal := 20 * math.Log10(v.Levels[0][0])
+					fromObs <- msg.MeterMessage{
+						FaderNumber: byte(num),
+						Value:       dbVal,
+					}
 				}
 			}
 		}

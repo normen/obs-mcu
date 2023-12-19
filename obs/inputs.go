@@ -480,14 +480,14 @@ func (l *ChannelList) SyncMcu() {
 func (l *ChannelList) UpdateVisible() {
 	resp, err := client.Scenes.GetCurrentProgramScene()
 	if err == nil {
-		list, err := client.SceneItems.GetSceneItemList(&sceneitems.GetSceneItemListParams{SceneName: resp.CurrentProgramSceneName})
+		list, err := client.SceneItems.GetSceneItemList(&sceneitems.GetSceneItemListParams{SceneName: &resp.CurrentProgramSceneName})
 		if err == nil {
 			for _, item := range list.SceneItems {
 				if item.SceneItemEnabled {
 					l.SetVisible(item.SourceName, true)
 				}
 				if item.SourceType == "OBS_SOURCE_TYPE_SCENE" {
-					sublist, err := client.SceneItems.GetGroupSceneItemList(&sceneitems.GetGroupSceneItemListParams{SceneName: item.SourceName})
+					sublist, err := client.SceneItems.GetGroupSceneItemList(&sceneitems.GetGroupSceneItemListParams{SceneName: &item.SourceName})
 					if err == nil {
 						for _, subItem := range sublist.SceneItems {
 							if subItem.SceneItemEnabled {
@@ -515,7 +515,7 @@ func (l *ChannelList) AddInput(inputName string) {
 		return
 	}
 	if _, ok := l.inputs[inputName]; !ok {
-		tracks, _ := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
+		tracks, _ := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: &inputName})
 		if tracks.InputAudioTracks != nil {
 			l.AddChannel(inputName)
 			l.sync()
@@ -549,37 +549,37 @@ func (l *ChannelList) addSpecialInput(inputName string) {
 
 // get the basic info of an input (volume, mute etc)
 func (l *ChannelList) getBaseInfos(inputName string) {
-	volume, err := client.Inputs.GetInputVolume(&inputs.GetInputVolumeParams{InputName: inputName})
+	volume, err := client.Inputs.GetInputVolume(&inputs.GetInputVolumeParams{InputName: &inputName})
 	if err == nil {
 		l.SetVolume(inputName, volume.InputVolumeMul)
 	} else {
 		log.Print(err)
 	}
-	muted, err := client.Inputs.GetInputMute(&inputs.GetInputMuteParams{InputName: inputName})
+	muted, err := client.Inputs.GetInputMute(&inputs.GetInputMuteParams{InputName: &inputName})
 	if err == nil {
 		l.SetMuted(inputName, muted.InputMuted)
 	} else {
 		log.Print(err)
 	}
-	pan, err := client.Inputs.GetInputAudioBalance(&inputs.GetInputAudioBalanceParams{InputName: inputName})
+	pan, err := client.Inputs.GetInputAudioBalance(&inputs.GetInputAudioBalanceParams{InputName: &inputName})
 	if err == nil {
 		l.SetPan(inputName, pan.InputAudioBalance)
 	} else {
 		log.Print(err)
 	}
-	mon, err := client.Inputs.GetInputAudioMonitorType(&inputs.GetInputAudioMonitorTypeParams{InputName: inputName})
+	mon, err := client.Inputs.GetInputAudioMonitorType(&inputs.GetInputAudioMonitorTypeParams{InputName: &inputName})
 	if err == nil {
 		l.SetMonitorType(inputName, mon.MonitorType)
 	} else {
 		log.Print(err)
 	}
-	sync, err := client.Inputs.GetInputAudioSyncOffset(&inputs.GetInputAudioSyncOffsetParams{InputName: inputName})
+	sync, err := client.Inputs.GetInputAudioSyncOffset(&inputs.GetInputAudioSyncOffsetParams{InputName: &inputName})
 	if err == nil {
 		l.SetDelayMS(inputName, sync.InputAudioSyncOffset)
 	} else {
 		log.Print(err)
 	}
-	tracks, err := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: inputName})
+	tracks, err := client.Inputs.GetInputAudioTracks(&inputs.GetInputAudioTracksParams{InputName: &inputName})
 	if err == nil {
 		l.SetTracks(inputName, map[string]bool(*tracks.InputAudioTracks))
 	} else {
