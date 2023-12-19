@@ -264,8 +264,6 @@ func processMcuMessage(message interface{}) {
 	}
 }
 
-var flip bool = false
-
 // Processes a message from OBS,
 // called by the runloop when a message is received
 func processObsMessage(event interface{}) {
