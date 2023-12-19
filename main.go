@@ -27,7 +27,6 @@ import (
 
 var VERSION string = "v0.7.0"
 var waitGroup sync.WaitGroup
-var fromUser chan interface{}
 
 // TODO: config file command line option
 func main() {
@@ -154,7 +153,7 @@ func onExit() {
 }
 
 func onReady() {
-	fromUser = make(chan interface{}, 100)
+	fromUser := make(chan interface{}, 100)
 	systray.SetTemplateIcon(icon.Data, icon.Data)
 	//systray.SetTitle("obs-mcu")
 	systray.SetTooltip("obs-mcu")
