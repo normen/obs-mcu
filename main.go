@@ -191,7 +191,7 @@ func onReady() {
 		go func() {
 			for {
 				<-item.ClickedCh
-				fromUser <- msg.MidiInputSetting{PortName: val}
+				fromUser <- msg.MidiOutputSetting{PortName: val}
 				for _, v := range outputItems {
 					v.Uncheck()
 				}
