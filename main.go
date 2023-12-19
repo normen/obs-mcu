@@ -25,7 +25,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-var VERSION string = "v0.7.0"
+var VERSION string = "v0.7.1"
 var waitGroup sync.WaitGroup
 
 // TODO: config file command line option
@@ -243,5 +243,5 @@ func onReady() {
 // check if we run headless
 func isHeadless() bool {
 	_, display := os.LookupEnv("DISPLAY")
-	return runtime.GOOS != "windows" && !display
+	return runtime.GOOS != "windows" && runtime.GOOS != "darwin" && !display
 }
