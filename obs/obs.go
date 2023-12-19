@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -298,6 +299,7 @@ func processObsMessage(event interface{}) {
 		channels.SetDelayMS(e.InputName, e.InputAudioSyncOffset)
 	case *events.ExitStarted:
 		log.Print("OBS is shutting down")
+		doExit()
 	case *events.InputVolumeMeters:
 		for _, v := range e.Inputs {
 			num := channels.GetVisibleNumber(v.Name)
@@ -334,7 +336,17 @@ func doExit() {
 	channels.Clear()
 	if ExitWithObs {
 		log.Print("Bye")
-		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		p, err := os.FindProcess(os.Getpid())
+		if err != nil {
+			log.Print(err)
+		}
+		if runtime.GOOS == "windows" {
+			p.Signal(syscall.SIGTERM)
+
+		} else {
+			p.Signal(syscall.SIGINT)
+		}
 	} else {
 		retryConnect()
 	}
