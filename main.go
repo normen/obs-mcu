@@ -94,11 +94,11 @@ func UserConfigure() bool {
 	fmt.Println("")
 	inputs := mcu.GetMidiInputs()
 	for i, v := range inputs {
-		fmt.Printf("MIDI Input #%v: %s\n", i+1, v)
+		fmt.Printf("MIDI Input %v: %s\n", i+1, v)
 	}
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println()
-	fmt.Print("Enter input port number and press [enter]: ")
+	fmt.Print("Enter MIDI input port number and press [enter]: ")
 	text, _ := reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	num, err := strconv.Atoi(text)
@@ -111,10 +111,10 @@ func UserConfigure() bool {
 	fmt.Println()
 	outputs := mcu.GetMidiOutputs()
 	for i, v := range outputs {
-		fmt.Printf("MIDI Output #%v: %s\n", i+1, v)
+		fmt.Printf("MIDI Output %v: %s\n", i+1, v)
 	}
 	fmt.Println()
-	fmt.Print("Enter output port number and press [enter]: ")
+	fmt.Print("Enter MIDI output port number and press [enter]: ")
 	text, _ = reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	num, err = strconv.Atoi(text)
@@ -128,15 +128,14 @@ func UserConfigure() bool {
 	fmt.Println()
 	fmt.Println("*** CONFIGURING OBS connection ***")
 	fmt.Println()
-	fmt.Println("Please enter the OBS host name and websocket password, for (current) press [enter]")
-	fmt.Printf("Enter host and port (%v): ", config.Config.General.ObsHost)
+	fmt.Printf("Enter OBS host and port or press enter for (%v): ", config.Config.General.ObsHost)
 	text, _ = reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	if text != "" {
 		config.Config.General.ObsHost = text
 	}
 	fmt.Println()
-	fmt.Printf("Enter password or press [enter] to keep current: ")
+	fmt.Printf("Enter OBS password or press [enter] to keep current: ")
 	text, _ = reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	if text != "" {
