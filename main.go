@@ -25,7 +25,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-var VERSION string = "v0.7.0-alpha"
+var VERSION string = "v0.7.0"
 var waitGroup sync.WaitGroup
 var fromUser chan interface{}
 
