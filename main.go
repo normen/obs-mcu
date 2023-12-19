@@ -162,6 +162,10 @@ func onReady() {
 	systray.AddSeparator()
 	mMidiInputs := systray.AddMenuItem("MIDI Input", "Select MIDI input (restart to apply)")
 	mMidiOutputs := systray.AddMenuItem("MIDI Output", "Select MIDI output (restart to apply)")
+	systray.AddSeparator()
+	mSettings := systray.AddMenuItem("Settings", "Other Settings")
+	mShowMeters := mSettings.AddSubMenuItemCheckbox("Show Meters", "Show meters on MCU (restart to apply)", config.Config.McuFaders.ShowMeters)
+	mSimulateTouch := mSettings.AddSubMenuItemCheckbox("Simulate Touch", "Simulate touch on MCU for surfaces with no touch support (restart to apply)", config.Config.McuFaders.SimulateTouch)
 	inputs := mcu.GetMidiInputs()
 	inputItems := make([]*systray.MenuItem, len(inputs))
 	for i, v := range inputs {
@@ -207,6 +211,22 @@ func onReady() {
 				systray.Quit()
 			case <-mOpenConfig.ClickedCh:
 				open.Run(config.GetConfigFilePath())
+			case <-mShowMeters.ClickedCh:
+				config.Config.McuFaders.ShowMeters = !config.Config.McuFaders.ShowMeters
+				config.SaveConfig()
+				if config.Config.McuFaders.ShowMeters {
+					mShowMeters.Check()
+				} else {
+					mShowMeters.Uncheck()
+				}
+			case <-mSimulateTouch.ClickedCh:
+				config.Config.McuFaders.SimulateTouch = !config.Config.McuFaders.SimulateTouch
+				config.SaveConfig()
+				if config.Config.McuFaders.SimulateTouch {
+					mSimulateTouch.Check()
+				} else {
+					mSimulateTouch.Uncheck()
+				}
 			case message := <-fromUser:
 				switch msg := message.(type) {
 				case msg.MidiInputSetting:
