@@ -1,5 +1,15 @@
 package msg
 
+// user -> obs runloop
+type MidiInputSetting struct {
+	PortName string
+}
+
+// user -> obs runloop
+type MidiOutputSetting struct {
+	PortName string
+}
+
 // obs <- mackie
 type UpdateRequest struct {
 }

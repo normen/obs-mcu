@@ -148,9 +148,10 @@ Heres a list of planned features I might get around to work on but some of them 
 
 ### Development
 
-Building should be straightforward, on linux you need to have libasound2-dev available.
+Building should be straightforward, on linux you need to have libasound2-dev libgtk-3-dev and libayatana-appindicator3-dev available.
 
 - Install golang
+- On Linux run `sudo apt-get install gcc libasound2-dev libgtk-3-dev libayatana-appindicator3-dev`
 - Run `go build` or use the Makefile with `make`
 
 ##### Overview

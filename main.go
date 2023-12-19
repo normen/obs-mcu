@@ -11,17 +11,23 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/getlantern/systray"
 	"github.com/normen/obs-mcu/config"
+	"github.com/normen/obs-mcu/icon"
 	"github.com/normen/obs-mcu/mcu"
+	"github.com/normen/obs-mcu/msg"
 	"github.com/normen/obs-mcu/obs"
+	"github.com/skratchdot/open-golang/open"
 )
 
-var VERSION string = "v0.6.1"
+var VERSION string = "v0.7.0-alpha"
 var waitGroup sync.WaitGroup
+var fromUser chan interface{}
 
 // TODO: config file command line option
 func main() {
@@ -60,7 +66,16 @@ func startRunloops() {
 	fromObs := make(chan interface{}, 100)
 	obs.InitObs(fromMcu, fromObs, &waitGroup)
 	mcu.InitMcu(fromMcu, fromObs, &waitGroup)
-	waitGroup.Wait()
+	if isHeadless() {
+		waitGroup.Wait()
+	} else {
+		go func() {
+			waitGroup.Wait()
+			log.Print("Quitting systray..")
+			systray.Quit()
+		}()
+		systray.Run(onReady, onExit)
+	}
 }
 
 func ShowMidiPorts() {
@@ -134,4 +149,81 @@ func UserConfigure() bool {
 		log.Println(err)
 	}
 	return true
+}
+
+func onExit() {
+}
+
+func onReady() {
+	fromUser = make(chan interface{}, 100)
+	systray.SetTemplateIcon(icon.Data, icon.Data)
+	//systray.SetTitle("obs-mcu")
+	systray.SetTooltip("obs-mcu")
+	mOpenConfig := systray.AddMenuItem("Edit Config", "Open config file")
+	systray.AddSeparator()
+	mMidiInputs := systray.AddMenuItem("MIDI Input", "Select MIDI input")
+	mMidiOutputs := systray.AddMenuItem("MIDI Output", "Select MIDI output")
+	inputs := mcu.GetMidiInputs()
+	inputItems := make([]*systray.MenuItem, len(inputs))
+	for i, v := range inputs {
+		selected := config.Config.Midi.PortIn == v
+		item := mMidiInputs.AddSubMenuItemCheckbox(v, "", selected)
+		inputItems[i] = item
+		val := v
+		go func() {
+			for {
+				<-item.ClickedCh
+				fromUser <- msg.MidiInputSetting{PortName: val}
+				for _, v := range inputItems {
+					v.Uncheck()
+				}
+				item.Check()
+			}
+		}()
+	}
+	outputs := mcu.GetMidiOutputs()
+	outputItems := make([]*systray.MenuItem, len(outputs))
+	for i, v := range outputs {
+		selected := config.Config.Midi.PortOut == v
+		item := mMidiOutputs.AddSubMenuItemCheckbox(v, "", selected)
+		outputItems[i] = item
+		val := v
+		go func() {
+			for {
+				<-item.ClickedCh
+				fromUser <- msg.MidiInputSetting{PortName: val}
+				for _, v := range outputItems {
+					v.Uncheck()
+				}
+				item.Check()
+			}
+		}()
+	}
+	systray.AddSeparator()
+	mQuitOrig := systray.AddMenuItem("Quit", "Quit obs-mcu")
+	go func() {
+		for {
+			select {
+			case <-mQuitOrig.ClickedCh:
+				systray.Quit()
+			case <-mOpenConfig.ClickedCh:
+				open.Run(config.GetConfigFilePath())
+			case message := <-fromUser:
+				switch msg := message.(type) {
+				case msg.MidiInputSetting:
+					config.Config.Midi.PortIn = msg.PortName
+					config.SaveConfig()
+				case msg.MidiOutputSetting:
+					config.Config.Midi.PortOut = msg.PortName
+					config.SaveConfig()
+				}
+			}
+		}
+	}()
+}
+
+// check if we run headless
+func isHeadless() bool {
+	_, display := os.LookupEnv("DISPLAY")
+	return runtime.GOOS != "windows" && !display
 }
