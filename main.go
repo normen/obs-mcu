@@ -161,8 +161,8 @@ func onReady() {
 	systray.SetTooltip("obs-mcu")
 	mOpenConfig := systray.AddMenuItem("Edit Config", "Open config file")
 	systray.AddSeparator()
-	mMidiInputs := systray.AddMenuItem("MIDI Input", "Select MIDI input")
-	mMidiOutputs := systray.AddMenuItem("MIDI Output", "Select MIDI output")
+	mMidiInputs := systray.AddMenuItem("MIDI Input", "Select MIDI input (restart to apply)")
+	mMidiOutputs := systray.AddMenuItem("MIDI Output", "Select MIDI output (restart to apply)")
 	inputs := mcu.GetMidiInputs()
 	inputItems := make([]*systray.MenuItem, len(inputs))
 	for i, v := range inputs {
