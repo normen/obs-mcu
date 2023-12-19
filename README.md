@@ -6,9 +6,7 @@ Connect a Mackie Control (or compatible MCU) to OBS
 
 This small application creates a bridge between OBS and a Mackie Control (or compatible) fader controller. It allows controlling the OBS audio channels through the hardware faders as well as executing OBS keyboard shortcuts via buttons on the control surface.
 
-Its written in golang so the executable has pretty much no external dependencies and can be run as is on any system.
-
-I created this for myself but it was in a well enough state (configurable etc) that I decided to release it, it comes with no warranties.
+Most features of the OBS audio mixer are supported, including the ability to control the audio sync offset, the output tracks, the monitoring state and balance of the audio channels. It also displays the metering of the audio channels on the MCU.
 
 ### How
 
@@ -16,9 +14,11 @@ The application runs standalone alongside of OBS, it connects via MIDI to the MC
 
 The fact that it runs as a standalone app even on a Raspberry Pi allows you to control your OBS from anywhere using your MCU, simply by running the app on a headless Pi and connecting it to your MCU and Wifi.
 
-#### Controls
+Its written in golang so the executable has pretty much no external dependencies and can be run as is on any system.
 
-##### Fader Section
+### Controls
+
+#### Fader Section
 
 The `Faders` and the `Mute` buttons work as you'd expect, they basically mirror the audio mixer in OBS.
 
@@ -38,7 +38,7 @@ You can use the `Channel/Bank` buttons to see more channels in case you have mor
 
 The rest of the fader section including the assign buttons are not mappable as they are kept free for future feature updates.
 
-##### Buttons
+#### Buttons
 
 Almost all other buttons except the assign and automation buttons are freely assignable to any OBS keyboard shortcut through the config file (see below).
 
@@ -106,6 +106,13 @@ They have to be prefixed with `STATE:`, like so:
 play = STATE:StreamState
 ```
 
+##### Fader Options
+
+Set these options under `mcu_faders` to `true` to enable the respective feature:
+
+- `show_meters` - Show the audio meters on the MCU (might be slow on slower systems)
+- `simulate_touch` - Simulate a touch on the MCU fader when the fader is moved (for surfaces with no touch detection)
+
 #### Command line options
 
 - `-c` configure the basic MIDI and OBS connection settings
@@ -137,7 +144,6 @@ Heres a list of planned features I might get around to work on but some of them 
 ##### Features
 
 - [ ] Allow loading different config files
-- [ ] Show meters
 - [ ] Video fade on master fader
 
 ### Development
@@ -151,7 +157,7 @@ Building should be straightforward, on linux you need to have libasound2-dev ava
 
 Theres basically two runloops, one for the connection to the MCU and one for the connection to OBS. The latter is handling most of the logic while the MCU loop is basically just translating and trying to keep the amount of data being sent via MIDI low. They communicate through two channels via Message structs and keep draining each others messages while communicating with the MCU respectively OBS.
 
-Having just two runloops instead of a heap of go routines makes it easy to track the control flow logic so theres no need for excessive locking and backckecking.
+Having just two runloops instead of a heap of go routines makes it easy to track the control flow logic so theres no need for excessive locking and backchecking.
 
 ### Thanks
 
