@@ -131,6 +131,10 @@ You can run obs-mcu automatically every time that OBS starts by using the OBS pl
 
 Now obs-mcu will start whenever OBS starts and automatically connect to both OBS and your MCU. Note that when OBS crashes the app can't detect the shutdown and will stay opened. You will have to quit it using the Task Manager in that case.
 
+#### Systray
+
+The app has a systray icon that allows you to quit the app and to open the config file. It also allows you to select the MIDI in and out ports. Restart the app to apply any changes.
+
 ### Caveats
 
 Handling of MIDI device disconnects is currently not very graceful, it might take a while until the app detects changes in the MIDI setup.
