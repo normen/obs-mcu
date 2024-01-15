@@ -20,7 +20,7 @@ go build -o obs-mcu
 zip $MACF obs-mcu
 rm obs-mcu
 echo "Building Windows and Linux Version..."
-ssh hp-windows -t "cd \\Users\\Normen\\Code\\obs-mcu && git pull && go build && bash -c '~/.go/bin/go build'"
+ssh hp-windows -t "cd \\Users\\Normen\\Code\\obs-mcu && git pull && go build -ldflags=\"-extldflags=-static\" && bash -c '~/.go/bin/go build'"
 scp hp-windows:~/Code/obs-mcu/obs-mcu.exe ./
 zip $WINF obs-mcu.exe
 rm obs-mcu.exe
