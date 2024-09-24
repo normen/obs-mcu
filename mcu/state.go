@@ -211,7 +211,13 @@ func (m *McuState) SetChannelText(fader byte, text string, lower bool) {
 // SetMeter sets the meter level for a fader, it is sent directly
 func (m *McuState) SetMeter(fader byte, value float64) {
 	var outByte byte
-	if value > -6 {
+	if value >= 0 {
+		outByte = byte(gomcu.MoreThan0)
+	} else if value > -2 {
+		outByte = byte(gomcu.MoreThan2)
+	} else if value > -4 {
+		outByte = byte(gomcu.MoreThan4)
+	} else if value > -6 {
 		outByte = byte(gomcu.MoreThan6)
 	} else if value > -8 {
 		outByte = byte(gomcu.MoreThan8)
