@@ -221,6 +221,8 @@ func (m *McuState) SetMeter(fader byte, value float64) {
 		outByte = byte(gomcu.MoreThan6)
 	} else if value > -8 {
 		outByte = byte(gomcu.MoreThan8)
+	} else if value > -10 {
+		outByte = byte(gomcu.MoreThan10)
 	} else if value > -14 {
 		outByte = byte(gomcu.MoreThan14)
 	} else if value > -20 {
