@@ -14,6 +14,7 @@ var cfg *ini.File
 type IniFile struct {
 	*General
 	*Midi
+	*Advanced
 	*McuFaders
 	*McuVpots
 	*McuLeds
@@ -28,6 +29,10 @@ type General struct {
 type Midi struct {
 	PortIn  string
 	PortOut string
+}
+
+type Advanced struct {
+	SyncDelay int
 }
 
 type McuFaders struct {
@@ -242,6 +247,9 @@ var Config = IniFile{
 	&Midi{
 		PortIn:  "",
 		PortOut: "",
+	},
+	&Advanced{
+		SyncDelay: 100,
 	},
 	&McuFaders{
 		ShowMeters:    false,

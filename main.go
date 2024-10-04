@@ -25,7 +25,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-var VERSION string = "v0.7.8"
+var VERSION string = "v0.7.10"
 var waitGroup sync.WaitGroup
 
 // TODO: config file command line option

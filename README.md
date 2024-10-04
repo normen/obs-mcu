@@ -1,4 +1,4 @@
-## OBS-MCU
+# OBS-MCU
 
 Connect a Mackie Control (or compatible MCU) to OBS
 
@@ -16,9 +16,9 @@ The fact that it runs as a standalone app even on a Raspberry Pi allows you to c
 
 Its written in golang so the executable has pretty much no external dependencies and can be run as is on any system.
 
-### Controls
+## Controls
 
-#### Fader Section
+### Fader Section
 
 The `Faders` and the `Mute` buttons work as you'd expect, they basically mirror the audio mixer in OBS.
 
@@ -38,7 +38,7 @@ You can use the `Channel/Bank` buttons to see more channels in case you have mor
 
 The rest of the fader section including the assign buttons are not mappable as they are kept free for future feature updates.
 
-#### Buttons
+### Buttons
 
 Almost all other buttons except the assign and automation buttons are freely assignable to any OBS keyboard shortcut through the config file (see below).
 
@@ -48,7 +48,7 @@ The standard mapping is as follows:
 - `Stop` - Stop stream
 - `Rec` - Start recording
 
-### Installation
+## Installation
 
 On Windows and Linux just put the binary somewhere and run it, for MacOS theres a homebrew tap to install the latest version:
 
@@ -56,9 +56,9 @@ On Windows and Linux just put the binary somewhere and run it, for MacOS theres 
 
 which can then be run from the command line using `obs-mcu`
 
-### Configuration
+## Configuration
 
-#### Basic Rundown
+### Basic Rundown
 
 - Enable websockets in OBS
 - Put `obs-mcu`(`.exe`) executable somewhere
@@ -70,7 +70,7 @@ which can then be run from the command line using `obs-mcu`
   - Enter the OBS websocket password or keep empty for no password
 - Start OBS and control your audio channels
 
-#### Config file
+### Config file
 
 All configuration happens through a config file. The config file is created on the first start, its location is
 
@@ -83,7 +83,7 @@ All configuration happens through a config file. The config file is created on t
 
 You have to specify the OBS host, its password, and the MIDI in and out ports.
 
-##### Buttons
+#### Buttons
 
 To map a button you have to find the internal OBS key name and assign it in the config file, prefixed with `KEY:`, like so:
 
@@ -92,7 +92,7 @@ To map a button you have to find the internal OBS key name and assign it in the 
 play = KEY:OBSBasic.StartStreaming
 ```
 
-##### LEDs
+#### LEDs
 
 Some buttons have LEDs which can be assigned with states in OBS, the supported states are (for now):
 
@@ -107,21 +107,25 @@ They have to be prefixed with `STATE:`, like so:
 play = STATE:StreamState
 ```
 
-##### Fader Options
+#### Fader Options
 
 Set these options under `mcu_faders` to `true` to enable the respective feature:
 
 - `show_meters` - Show the audio meters on the MCU (might be slow on slower systems)
 - `simulate_touch` - Simulate a touch on the MCU fader when the fader is moved (for surfaces with no touch detection)
 
-#### Command line options
+#### Advanced Options
+
+- `sync_delay` - The time in milliseconds before updating the MCU channels after a change in OBS to avoid flipping faders when changing scenes
+
+### Command line options
 
 - `-c` configure the basic MIDI and OBS connection settings
 - `-l` lists the names of all MIDI ports
 - `-k` lists the names of all OBS keyboard shortcuts (after connecting)
 - `-x` exits obs-mcu when OBS exits 
 
-#### Auto-Start with OBS
+### Auto-Start with OBS
 
 You can run obs-mcu automatically every time that OBS starts by using the OBS plugin [Advanced Scene Switcher](https://github.com/WarmUpTill/SceneSwitcher) in combination with the `-x` command line option. _Make sure you configure obs-mcu before you do this because you won't see the obs-mcu window when starting like this._
 
@@ -132,26 +136,26 @@ You can run obs-mcu automatically every time that OBS starts by using the OBS pl
 
 Now obs-mcu will start whenever OBS starts and automatically connect to both OBS and your MCU. Note that when OBS crashes the app can't detect the shutdown and will stay opened. You will have to quit it using the System Tray in that case.
 
-#### Systray
+### Systray
 
 The app has a systray icon that allows you to quit the app and to open the config file. It also allows you to select the MIDI in and out ports. Restart the app to apply any changes.
 
-### Caveats
+## Caveats
 
 Handling of MIDI device disconnects is currently not very graceful, it might take a while until the app detects changes in the MIDI setup.
 
 Theres afaict no way to get the "hidden" state of audio channels, so they will always display on the MCU even if they're hidden in OBS. As a workaround you can simply name these channels so that they appear all the way on the left and then press the "channel right" button until all channels you don't want to see are hidden.
 
-### TODO / Future
+## TODO / Future
 
 Heres a list of planned features I might get around to work on but some of them depend on features that are not yet available in OBS-websockets.
 
-##### Features
+#### Features
 
 - [ ] Allow loading different config files
 - [ ] Video fade on master fader
 
-### Development
+## Development
 
 Building should be straightforward, on linux you need to have libasound2-dev libgtk-3-dev and libayatana-appindicator3-dev available.
 
@@ -159,12 +163,12 @@ Building should be straightforward, on linux you need to have libasound2-dev lib
 - On Linux run `sudo apt-get install clang gcc libasound2-dev libgtk-3-dev libayatana-appindicator3-dev`
 - Run `go build` or use the Makefile with `make`
 
-##### Overview
+### Overview
 
 Theres basically two runloops, one for the connection to the MCU and one for the connection to OBS. The latter is handling most of the logic while the MCU loop is basically just translating and trying to keep the amount of data being sent via MIDI low. They communicate through two channels via Message structs and keep draining each others messages while communicating with the MCU respectively OBS.
 
 Having just two runloops instead of a heap of go routines makes it easy to track the control flow logic so theres no need for excessive locking and backchecking.
 
-### Thanks
+## Thanks
 
 Thanks to [chabad360](https://github.com/chabad360) for his [gomcu](https://github.com/chabad360/gomcu) code which is integrated in this app.

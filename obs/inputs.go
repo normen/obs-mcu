@@ -9,6 +9,7 @@ import (
 
 	"github.com/andreykaipov/goobs/api/requests/inputs"
 	"github.com/andreykaipov/goobs/api/requests/sceneitems"
+	"github.com/normen/obs-mcu/config"
 	"github.com/normen/obs-mcu/msg"
 )
 
@@ -353,7 +354,7 @@ func (l *ChannelList) sync() {
 		l.syncRetry = nil
 	}
 	// TODO: spaghetti (sync)
-	l.syncRetry = time.AfterFunc(100*time.Millisecond, func() { synch <- l.SyncMcu })
+	l.syncRetry = time.AfterFunc(time.Duration(config.Config.Advanced.SyncDelay)*time.Millisecond, func() { synch <- l.SyncMcu })
 }
 
 // actual sync with mcu, called from main runloop (sync channel)
