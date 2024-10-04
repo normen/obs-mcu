@@ -55,6 +55,8 @@ func InitObs(in chan interface{}, out chan interface{}, wg *sync.WaitGroup) {
 	waitGroup = wg
 	channels = NewChannelList()
 	states = NewObsStates()
+	// add always on state
+	states.SetState("AlwaysOn", true)
 	interrupt = make(chan os.Signal, 1)
 	connection = make(chan int, 1)
 	synch = make(chan func(), 1)

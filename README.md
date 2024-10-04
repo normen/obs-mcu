@@ -98,6 +98,7 @@ Some buttons have LEDs which can be assigned with states in OBS, the supported s
 
 - `StreamState`, when OBS is streaming
 - `RecordState`, when OBS is recording
+- `AlwaysOn`, to always light that LED
 
 They have to be prefixed with `STATE:`, like so:
 
