@@ -15,21 +15,34 @@ type ObsState struct {
 }
 
 type ObsStates struct {
-	states map[string]*ObsState
+	states map[string][]*ObsState
 }
 
 func NewObsStates() *ObsStates {
 	ret := &ObsStates{
-		states: make(map[string]*ObsState),
+		states: make(map[string][]*ObsState),
 	}
 	ret.getConfig()
 	return ret
 }
 
 func (s *ObsStates) SetState(name string, state bool) {
-	if st, ok := s.states[name]; ok {
-		if st.State != state {
-			st.State = state
+	if sts, ok := s.states[name]; ok {
+		for _, st := range sts {
+			if st.State != state {
+				st.State = state
+				fromObs <- msg.LedMessage{
+					LedName:  st.LedName,
+					LedState: st.State,
+				}
+			}
+		}
+	}
+}
+
+func (s *ObsStates) SendAll() {
+	for _, sts := range s.states {
+		for _, st := range sts {
 			fromObs <- msg.LedMessage{
 				LedName:  st.LedName,
 				LedState: st.State,
@@ -38,25 +51,16 @@ func (s *ObsStates) SetState(name string, state bool) {
 	}
 }
 
-func (s *ObsStates) SendAll() {
-	for _, st := range s.states {
-		fromObs <- msg.LedMessage{
-			LedName:  st.LedName,
-			LedState: st.State,
-		}
-	}
-}
+//func (s *ObsStates) GetState(name string) *ObsState {
+//if st, ok := s.states[name]; ok {
+//return st
+//}
+//return nil
+//}
 
-func (s *ObsStates) GetState(name string) *ObsState {
-	if st, ok := s.states[name]; ok {
-		return st
-	}
-	return nil
-}
-
-func (s *ObsStates) DeleteState(name string, state bool) {
-	delete(s.states, name)
-}
+//func (s *ObsStates) DeleteState(name string, state bool) {
+//delete(s.states, name)
+//}
 
 func (t *ObsStates) getConfig() {
 	s := reflect.ValueOf(config.Config.McuLeds).Elem()
@@ -76,7 +80,7 @@ func (t *ObsStates) getConfig() {
 							LedName:   ledName,
 							State:     false,
 						}
-						t.states[stateName] = &st
+						t.states[stateName] = append(t.states[stateName], &st)
 					}
 				}
 			}
