@@ -427,6 +427,10 @@ func (l *ChannelList) SyncMcu() {
 			FaderNumber: byte(i),
 			LedState:    0x00,
 		}
+		fromObs <- msg.MeterMessage{
+			FaderNumber: byte(i),
+			Value:       -144,
+		}
 	}
 	// assign display
 	asgn := []rune{'0' + rune((l.FirstChannel+1)/10%10), '0' + rune((l.FirstChannel+1)%10)}
