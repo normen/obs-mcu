@@ -467,6 +467,9 @@ func InitConfig() {
 			if section, err := cfg.GetSection("midi"); err == nil {
 				section.MapTo(&Config.Midi)
 			}
+			if section, err := cfg.GetSection("advanced"); err == nil {
+				section.MapTo(&Config.Advanced)
+			}
 			if section, err := cfg.GetSection("mcu_faders"); err == nil {
 				section.MapTo(&Config.McuFaders)
 			}
